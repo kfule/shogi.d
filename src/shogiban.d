@@ -92,7 +92,7 @@ class Shogiban {
     wstring toString(uint i, uint w) const {
       immutable wstring strKoma = "歩香桂銀金角飛玉　　";
       uint n = (_a >> shift[i]) & mask[i];
-      return n ? ((w ? " \x1b[31m" : " ").to !wstring ~strKoma[i] ~(format("%2d ", n) ~(w ? "\x1b[39m" : "")).to !wstring) : "      ";
+      return n ? format(" %s%s%2d %s", w ? "\x1b[31m" : "", strKoma[i], n, w ? "\x1b[39m" : "").to !wstring : "      ";
     }
   };
 
