@@ -6,17 +6,17 @@ struct Move {
   this(uint from, uint to, bool promote) @nogc { _m = ((cast(int)promote) << 15) | (from << 8) | to; }
   this(uint koma, uint to) @nogc { _m = (koma << 8) | (1 << 7) | to; }
 
-  uint getFrom() @nogc { return (_m >> 8) & 127; }
+  uint getFrom() @nogc const { return (_m >> 8) & 127; }
   alias getDropPiece = getFrom;
-  uint getTo() @nogc { return _m & 127; }
-  bool isPromote() @nogc { return cast(bool)(_m & (1 << 15)); }
-  bool isDrop() @nogc { return cast(bool)(_m & (1 << 7)); }
+  uint getTo() @nogc const { return _m & 127; }
+  bool isPromote() @nogc const { return cast(bool)(_m & (1 << 15)); }
+  bool isDrop() @nogc const { return cast(bool)(_m & (1 << 7)); }
 
   void setUndoInfo(uint k, uint c) @nogc { _m = (_m & 65535) | (k << 16) | (c << 24); }
 
-  uint getMovePiece() @nogc { return (_m >> 16) & 31; }
-  uint getMovePieceWithIsPromote() @nogc { return (_m >> 15) & 63; }
-  uint getCapture() @nogc { return (_m >> 24) & 31; }
+  uint getMovePiece() @nogc const { return (_m >> 16) & 31; }
+  uint getMovePieceWithIsPromote() @nogc const { return (_m >> 15) & 63; }
+  uint getCapture() @nogc const { return (_m >> 24) & 31; }
 
   unittest {
     auto m = Move(40, 50, true);
