@@ -75,6 +75,7 @@ class Shogiban {
   //持ち駒の定義
   struct Mochigoma {
     uint _a;
+    alias _a this;
     void init(int i) { _a = i; }
     //そのままでもハッシュキーとして使えるように桁数の多い歩の数を上位のビットに
     //そのままでも優劣比較ができるように1bitずつ空ける

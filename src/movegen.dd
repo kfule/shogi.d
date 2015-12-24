@@ -76,7 +76,7 @@ Move* genMovesBaseYY(bool generateKingMove = true)(in Shogiban pos, Move* mlist,
 
 //打ち手生成
 Move* genDropsYY(in Shogiban pos, Move* mlist) @nogc {
-  if (!pos._mochigomaYY._a) return mlist;
+  if (!pos._mochigomaYY) return mlist;
   return genDropsBaseYY(pos, mlist, pos._bbOccupy.not);
 }
 Move* genDropsBaseYY(in Shogiban pos, Move* mlist, Bitboard target) @nogc {
