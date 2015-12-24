@@ -89,11 +89,11 @@ class Shogiban {
       bool isYYXX() @nogc const { return cast(bool)(_a & (mask[idx.XX] << shift[idx.XX])); }
     }.generateReplace("YY", [ "", "p" ])
               .generateReplace("XX", [ "FU", "KY", "KE", "GI", "KI", "KA", "HI", "OU" ]));
-    wstring toString(uint i, uint b) const {
+    wstring toString(uint i, uint w) const {
       immutable wstring strKoma = "歩香桂銀金角飛玉　　";
       uint n = (_a >> shift[i]) & mask[i];
-      return n ? ((b ? "\x1b[31m" : " ").to !wstring ~strKoma[i] ~format("%2d ", n).to !wstring ~(b ? "\x1b[39m" : "").to !wstring)
-               : "     ";
+      return n ? ((w ? " \x1b[31m" : " ").to !wstring ~strKoma[i] ~format("%2d ", n).to !wstring ~(w ? "\x1b[39m" : "").to !wstring)
+               : "      ";
     }
   };
 
@@ -208,7 +208,7 @@ class Shogiban {
     str ~= "手番";
     str ~= "\n      ";
     foreach (j; 0..9) { str ~= strX[8 - j]; }
-    str ~= "\n ";
+    str ~= "\n";
     foreach (i; 0..9) {
       str ~= _mochigomaW.toString(i, 1);
       foreach (j; 0..9) {
@@ -219,7 +219,7 @@ class Shogiban {
       }
       str ~= strY[i];
       str ~= _mochigomaB.toString(8 - i, 0);
-      str ~= "\n ";
+      str ~= "\n";
     }
     str ~= format("\nHashkey(Board): %016x", _boardHash).to !wstring;
     str ~= format("\nHashkey(HandB): %016x", _mochigomaB._a).to !wstring;
