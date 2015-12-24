@@ -24,8 +24,8 @@ immutable string strCaseTest = q{
 //ランダムに玉が取られるまで手を進める, を繰り返すテスト
 // reverse: trueのとき終局から初期局面まで巻き戻す処理も実施
 void testRandomMove(bool reverse = false)() {
-  Random gen;
-  gen.seed(10);
+  //auto gen = Random(10);
+  auto gen = Xorshift(10);
   auto s = new Shogiban;
   s.init;
   Move[1024] buf;
