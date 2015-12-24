@@ -189,6 +189,7 @@ class Shogiban {
           case komaType.YYXX:
             _bbOccupy |= _bbOccupyYY |= _bbYYXX |= MASK_SQ[sq];
             _masu[sq] = komaType.YYXX;
+            _boardHash.update(sq, komaType.YYXX);
             break;
         }.generateReplace("YY", [ "B", "W" ])
                   .generateReplace("XX", KOMA));
