@@ -14,7 +14,6 @@ version(LDC) {
   import ldc.intrinsics;
   uint bsf(T)(T src) { return cast(uint) llvm_cttz(src, true); }
   uint popCnt(T)(T x) { return cast(uint) llvm_ctpop(x); }
-  alias pextInt = __builtin_ia32_pext_si;
 }
 version(DigitalMars) {
   import core.bitop;
