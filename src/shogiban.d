@@ -65,9 +65,9 @@ class Shogiban {
   //駒の有る位置を表す(取る手生成、打つ手生成、飛び利きの計算に利用)
   Bitboard _bbOccupyB, _bbOccupyW, _bbOccupy;
 
-  byte _masu[81];  //マスごとの駒(取る手の更新に使用)
-  Teban _teban;        //手番
-  Hash _boardHash;     //盤面ハッシュ(持ち駒のハッシュ値は含まない)
+  byte _masu[81];   //マスごとの駒(取る手の更新に使用)
+  Teban _teban;     //手番
+  Hash _boardHash;  //盤面ハッシュ(持ち駒のハッシュ値は含まない)
 
   //持ち駒
   Mochigoma _mochigomaB = Mochigoma(0), _mochigomaW = Mochigoma(1);
@@ -79,19 +79,16 @@ class Shogiban {
     void init(int i) { _a = i; }
     //そのままでもハッシュキーとして使えるように桁数の多い歩の数を上位のビットに
     //そのままでも優劣比較ができるように1bitずつ空ける
+    enum idx { FU, KY, KE, GI, KI, KA, HI, OU };
     static immutable int[9] shift = [ 23, 19, 15, 11, 7, 4, 1, 29, 0 ];
     static immutable int[9] mask = [ 31, 7, 7, 7, 7, 3, 3, 3, 0 ];
-    mixin({
-      string s;
-      foreach (p;["", "p"])
-        foreach (i, k;["FU", "KY", "KE", "GI", "KI", "KA", "HI", "OU"]) {
-          s ~= "void add" ~p ~k ~"() @nogc {_a+=1<<" ~shift[i].text ~";}";
-          s ~= "void rem" ~p ~k ~"() @nogc {_a-=1<<" ~shift[i].text ~";}";
-          s ~= "uint num" ~p ~k ~"() @nogc const {return (_a>>" ~shift[i].text ~")&" ~mask[i].text ~";}";
-          s ~= "bool  is" ~p ~k ~"() @nogc const {return cast(bool)(_a&(" ~(mask[i] << shift[i]).text ~"));}";
-        }
-      return s;
-    }());
+    mixin(q{
+      void addYYXX() @nogc { _a += 1 << shift[idx.XX]; }
+      void remYYXX() @nogc { _a -= 1 << shift[idx.XX]; }
+      uint numYYXX() @nogc const { return (_a >> shift[idx.XX]) & mask[idx.XX]; }
+      bool isYYXX() @nogc const { return cast(bool)(_a & (mask[idx.XX] << shift[idx.XX])); }
+    }.generateReplace("YY", [ "", "p" ])
+              .generateReplace("XX", [ "FU", "KY", "KE", "GI", "KI", "KA", "HI", "OU" ]));
     wstring toString(uint i, uint b) const {
       immutable wstring strKoma = "歩香桂銀金角飛玉　　";
       uint n = (_a >> shift[i]) & mask[i];
