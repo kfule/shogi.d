@@ -5,10 +5,10 @@ import std.ascii;
 import std.conv;
 import std.stdio;
 import std.format;
+import std.random;
 
 import bitboard;
 import move;
-import hash;
 
 enum Teban { SENTE = 0, GOTE = -1 };
 
@@ -72,7 +72,27 @@ class Shogiban {
   //持ち駒
   Mochigoma _mochigomaB = Mochigoma(0), _mochigomaW = Mochigoma(1);
 
-  //持ち駒の定義
+  //--------------------------------------------------------
+  //  構造体定義
+  //--------------------------------------------------------
+  //盤面ハッシュ
+  struct Hash {
+    ulong _key;
+    alias _key this;
+
+    void update(const uint to, const uint koma) @nogc { _key ^= _zobrist[koma - 4][to]; }
+
+    static immutable ulong[81][28] _zobrist = initZobrist();
+    static ulong[81][28] initZobrist() {
+      ulong[81][28] z;
+      auto gen = Random(77);
+      foreach (koma_i; 4..32)
+        foreach (square_i; 0..81) { z[koma_i - 4][square_i] = uniform(ulong.min, ulong.max, gen) << 1; }
+      return z;
+    }
+  };
+
+  //持ち駒
   struct Mochigoma {
     uint _a;
     alias _a this;
