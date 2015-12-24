@@ -173,7 +173,7 @@ class Shogiban {
         mixin(q{
           case komaType.YYXX:
             static if ("XX".startsWith("FU", "KY", "KE", "GI", "KA", "HI", "KI")) {
-              _mochigomaYY.addXX();
+              _mochigomaYY.addXX;
               break;
             }
             assert(false);

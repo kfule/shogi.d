@@ -142,15 +142,15 @@ immutable MASK_16 = Bitboard(0x3FFFFFFFFFFFFFUL, 0x1FFFFFFFFFUL);
 immutable MASK_17 = Bitboard(0x7FFFFFFFFFFFFFFFUL, 0x3FFFFFFFFFFFUL);
 immutable MASK_18 = Bitboard(0xFFFFFFFFFFFFFFFFUL, 0x7FFFFFFFFFFFFFUL);
 
-immutable MASK_19 = NULLBITBOARD.not();
+immutable MASK_19 = NULLBITBOARD.not;
 
-immutable MASK_29 = MASK_1.not();
-immutable MASK_39 = MASK_12.not();
-immutable MASK_49 = MASK_13.not();
-immutable MASK_59 = MASK_14.not();
-immutable MASK_69 = MASK_15.not();
-immutable MASK_79 = MASK_16.not();
-immutable MASK_89 = MASK_17.not();
+immutable MASK_29 = MASK_1.not;
+immutable MASK_39 = MASK_12.not;
+immutable MASK_49 = MASK_13.not;
+immutable MASK_59 = MASK_14.not;
+immutable MASK_69 = MASK_15.not;
+immutable MASK_79 = MASK_16.not;
+immutable MASK_89 = MASK_17.not;
 
 //着手禁止点を除いた移動先
 alias MASK_LEGAL_BFU = MASK_29;
