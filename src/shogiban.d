@@ -17,20 +17,14 @@ const string[14] KOMA = [ "FU", "KY", "KE", "GI", "KA", "HI", "KI", "OU", "pFU",
 //文字列mixinで用いる成金を除いた駒文字列
 const string[10] KOMA_BB = [ "FU", "KY", "KE", "GI", "KA", "HI", "KI", "OU", "pKA", "pHI" ];
 
-//target文字列をlistの各文字列で置換した文字列を返す
-string generateReplace(string qs, string target, const string[] list) {
-  string s;
-  foreach (k; list) { s ~= qs.replace(target, k); }
-  return s;
+// target文字列をlistの各文字列で置換した文字列を返す
+string generateReplace(string qs, string target, const string[] list) { return list.map !(a => qs.replace(target, a)).join; }
+string generateReplace(string qs, string target1, string target2, const string[2] list) {
+  return iota(2).map !(a => qs.replace(target1, list[a]).replace(target2, list[(a + 1) & 1])).join;
 }
-string generateReplace(string qs, string target1, string target2, const string[] list) {
-  string s;
-  foreach (k1; list)
-    foreach (k2; list) {
-      if (k1 == k2) continue;
-      s ~= qs.replace(target1, k1).replace(target2, k2);
-    }
-  return s;
+unittest {
+  assert("TestXX".generateReplace("XX", [ "aaa", "bbb", "ccc" ]) == "TestaaaTestbbbTestccc");
+  assert("TestYYZZ".generateReplace("YY", "ZZ", [ "B", "W" ]) == "TestBWTestWB");
 }
 
 // enum
