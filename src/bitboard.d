@@ -43,7 +43,7 @@ struct Bitboard {
   /// ditto
   this(in ulong b0, in ulong b1) @nogc { b = [ b0, b1 ]; }
   /// ditto
-  this(string str) {
+  this(in string str) {
     auto s = str.replace("_", "");  //アンダースコアは含めて良い(ここで除去)
     assert(s.length == 81);         //ちょうど81かどうかコンパイル時にも確認可能
     auto s0 = s[17..81];
@@ -95,16 +95,9 @@ struct Bitboard {
   Bitboard ATTACKS_FILE(in uint sq) @nogc const { return _ATTACKS_FILE[(sq << 7) | computeHash(_MASK_FILE[sq])]; }
   Bitboard ATTACKS_HI(in uint sq) @nogc const { return ATTACKS_RANK(sq) | (ATTACKS_FILE(sq)); }
   Bitboard ATTACKS_KA(in uint sq) @nogc const { return ATTACKS_9119(sq) | (ATTACKS_1199(sq)); }
-  alias ATTACKS_BKA = ATTACKS_KA;
-  alias ATTACKS_WKA = ATTACKS_KA;
-  alias ATTACKS_BHI = ATTACKS_HI;
-  alias ATTACKS_WHI = ATTACKS_HI;
   Bitboard ATTACKS_pHI(in uint sq) @nogc const { return ATTACKS_HI(sq) | (ATTACKS_OU[sq]); }
   Bitboard ATTACKS_pKA(in uint sq) @nogc const { return ATTACKS_KA(sq) | (ATTACKS_OU[sq]); }
-  alias ATTACKS_BpKA = ATTACKS_pKA;
-  alias ATTACKS_WpKA = ATTACKS_pKA;
-  alias ATTACKS_BpHI = ATTACKS_pHI;
-  alias ATTACKS_WpHI = ATTACKS_pHI;
+  mixin(q{ alias ATTACKS_YYXX = ATTACKS_XX; }.generateReplace("YY", [ "B", "W" ]).generateReplace("XX", [ "KA", "HI", "pKA", "pHI" ]));
 
   // foreachを使うためのおまじない
   Range opSlice() { return Range(this); }
@@ -178,9 +171,10 @@ alias MASK_BHI = MASK_49;  //飛車の不成の移動先
 alias MASK_WHI = MASK_16;
 
 ///駒の利きの展開
-Bitboard[81] expand(string str) { return expand(Bitboard(str), (i, j) => 9 * i + j, (i, j) => -j); }
-Bitboard[81] expand(in Bitboard base40, int delegate(int, int) dg1, int delegate(int, int) dg2, const ulong msk_b0 = ulong.max,
+Bitboard[81] expand(in string str) { return expand((str), (i, j) => 9 * i + j, (i, j) => -j); }
+Bitboard[81] expand(in string str, int delegate(int, int) dg1, int delegate(int, int) dg2, const ulong msk_b0 = ulong.max,
                     const ulong msk_b1 = ulong.max) {
+  Bitboard base40 = Bitboard(str);
   // base40を左右にずらした時にビットが折り返されないようにするマスク
   //ここの書き方はセコい。。
   mixin({
@@ -224,18 +218,14 @@ unittest {
   foreach (i; 0..81) { assert(MASK_SQ[i] == Bitboard((1UL << i) & ((i - 64L) >> 63), (1UL << (i - 17)) & ~((i - 17L) >> 63))); }
 }
 
-immutable Bitboard[81] _MASK_1199 =
-    expand(Bitboard("100000000_010000000_001000000_000100000_000010000_000001000_000000100_000000010_000000001"), (i, j) => -i + j,
-           (i, j) => i - j, 0xFE7F3F9FCFEUL & ~0xC06030180C0603FFUL, 0x7F3F9FCFE0000000UL & ~0xFFC06030180C0603UL);
-immutable Bitboard[81] _MASK_9119 =
-    expand(Bitboard("000000001_000000010_000000100_000001000_000010000_000100000_001000000_010000000_100000000"), (i, j) => i + j,
-           (i, j) => -i - j, 0xFE7F3F9FCFEUL & ~0xC06030180C0603FFUL, 0x7F3F9FCFE0000000UL & ~0xFFC06030180C0603UL);
-immutable Bitboard[81] _MASK_FILE =
-    expand(Bitboard("000010000_000010000_000010000_000010000_000010000_000010000_000010000_000010000_000010000"), (i, j) => j,
-           (i, j) => 0, 0xFFFFFFE00UL, 0x7FFFFFFFF80000UL);
-immutable Bitboard[81] _MASK_RANK =
-    expand(Bitboard("000000000_000000000_000000000_000000000_111111111_000000000_000000000_000000000_000000000"), (i, j) => 9 * i,
-           (i, j) => 0, 0xFE7F3F9FCFEUL, 0x7F3F9FCFE0000000UL);
+immutable Bitboard[81] _MASK_1199 = expand("100000000_010000000_001000000_000100000_000010000_000001000_000000100_000000010_000000001",
+                                           (i, j) => -i + j, (i, j) => i - j, 0xFE7F3F9FC00UL, 0x3F9FCFE0000000UL);
+immutable Bitboard[81] _MASK_9119 = expand("000000001_000000010_000000100_000001000_000010000_000100000_001000000_010000000_100000000",
+                                           (i, j) => i + j, (i, j) => -i - j, 0xFE7F3F9FC00UL, 0x3F9FCFE0000000UL);
+immutable Bitboard[81] _MASK_FILE = expand("000010000_000010000_000010000_000010000_000010000_000010000_000010000_000010000_000010000",
+                                           (i, j) => j, (i, j) => 0, 0xFFFFFFE00UL, 0x7FFFFFFFF80000UL);
+immutable Bitboard[81] _MASK_RANK = expand("000000000_000000000_000000000_000000000_111111111_000000000_000000000_000000000_000000000",
+                                           (i, j) => 9 * i, (i, j) => 0, 0xFE7F3F9FCFEUL, 0x7F3F9FCFE0000000UL);
 
 //駒の利き
 immutable Bitboard[81] ATTACKS_BFU = expand("000000000_000000000_000000000_000000000_000000000_000010000_000000000_000000000_000000000");
@@ -270,7 +260,7 @@ Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) 
     Bitboard bb = NULLBITBOARD;
     foreach (uint n; 0..9) {
       if (line & (1 << n)) {
-        uint lineSq = getSq(sq, n);
+        uint lineSq = getSq(sq, n);  // lineの位置を2次元に
         if (0 <= lineSq && lineSq < 81) {
           bb.b[0] |= MASK_SQ[lineSq].b[0];
           bb.b[1] |= MASK_SQ[lineSq].b[1];
