@@ -65,7 +65,7 @@ class Shogiban {
   //駒の有る位置を表す(取る手生成、打つ手生成、飛び利きの計算に利用)
   Bitboard _bbOccupyB, _bbOccupyW, _bbOccupy;
 
-  byte _masu[81];   //マスごとの駒(取る手の更新に使用)
+  byte[81] _masu;   //マスごとの駒(取る手の更新に使用)
   Teban _teban;     //手番
   Hash _boardHash;  //盤面ハッシュ(持ち駒のハッシュ値は含まない)
 

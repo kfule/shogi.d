@@ -28,7 +28,7 @@ EOF
 cat releaseDheader tmpFile > releaseBinary.d
 rm tmpFile releaseDheader
 
-#dmd -ofd_shogi -m64 -inline -release -boundscheck=off -unittest -J. -O releaseBinary.d
-ldc2 -ofd_shogi -m64 -inline -release -boundscheck=off -unittest -J. -mcpu=x86-64 -mattr=+sse4.2 -O -O5  releaseBinary.d
+#dmd -w -ofd_shogi -m64 -inline -release -boundscheck=off -unittest -J. -O releaseBinary.d
+ldc2 -w -ofd_shogi -m64 -inline -release -boundscheck=off -unittest -J. -mcpu=x86-64 -mattr=+sse4.2 -O -O5  releaseBinary.d
 
 mv releaseBinary.d releaseBinary.d.bak
