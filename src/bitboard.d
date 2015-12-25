@@ -24,12 +24,8 @@ version(DigitalMars) {
 struct BitwiseRange(T, uint offset = 0) {
   T a;
   this(T b) { a = b; }
-  @property bool empty() {
-    return !cast(bool)a;
-  }
-  @property uint front() {
-    return bsf(a) + offset;
-  }
+  bool empty() @property { return !cast(bool)a; }
+  uint front() @property { return bsf(a) + offset; }
   void popFront() { a &= a - 1; }
 }
 
@@ -107,12 +103,8 @@ struct Bitboard {
     Bitboard bb;
     uint lastSq;
     this(Bitboard b) { bb = b; }
-    @property bool empty() {
-      return !cast(bool)bb;
-    }
-    @property uint front() {
-      return lastSq = bb.lsb;
-    }
+    bool empty() @property { return !cast(bool)bb; }
+    uint front() @property { return lastSq = bb.lsb; }
     void popFront() { bb ^= MASK_SQ[lastSq]; }
   }
 }
@@ -121,24 +113,24 @@ struct Bitboard {
 immutable NULLBITBOARD = Bitboard(0, 0);
 
 //特定の段のマスク
-immutable MASK_1 = Bitboard(0x1FFUL, 0);
-immutable MASK_2 = Bitboard(0x3FE00UL, 0x1UL);
-immutable MASK_3 = Bitboard(0x7FC0000UL, 0x3FEUL);
-immutable MASK_4 = Bitboard(0xFF8000000UL, 0x7FC00UL);
-immutable MASK_5 = Bitboard(0x1FF000000000UL, 0xFF80000UL);
-immutable MASK_6 = Bitboard(0x3FE00000000000UL, 0x1FF0000000UL);
-immutable MASK_7 = Bitboard(0x7FC0000000000000UL, 0x3FE000000000UL);
-immutable MASK_8 = Bitboard(0x8000000000000000UL, 0x7FC00000000000UL);
-immutable MASK_9 = Bitboard(0, 0xFF80000000000000UL);
+immutable MASK_1 = strToBB("000000000_000000000_000000000_000000000_000000000_000000000_000000000_000000000_111111111");
+immutable MASK_2 = strToBB("000000000_000000000_000000000_000000000_000000000_000000000_000000000_111111111_000000000");
+immutable MASK_3 = strToBB("000000000_000000000_000000000_000000000_000000000_000000000_111111111_000000000_000000000");
+immutable MASK_4 = strToBB("000000000_000000000_000000000_000000000_000000000_111111111_000000000_000000000_000000000");
+immutable MASK_5 = strToBB("000000000_000000000_000000000_000000000_111111111_000000000_000000000_000000000_000000000");
+immutable MASK_6 = strToBB("000000000_000000000_000000000_111111111_000000000_000000000_000000000_000000000_000000000");
+immutable MASK_7 = strToBB("000000000_000000000_111111111_000000000_000000000_000000000_000000000_000000000_000000000");
+immutable MASK_8 = strToBB("000000000_111111111_000000000_000000000_000000000_000000000_000000000_000000000_000000000");
+immutable MASK_9 = strToBB("111111111_000000000_000000000_000000000_000000000_000000000_000000000_000000000_000000000");
 
 //特定の段から段までのマスク
-immutable MASK_12 = Bitboard(0x3FFFFUL, 0x1UL);
-immutable MASK_13 = Bitboard(0x7FFFFFFUL, 0x3FFUL);
-immutable MASK_14 = Bitboard(0xFFFFFFFFFUL, 0x7FFFFUL);
-immutable MASK_15 = Bitboard(0x1FFFFFFFFFFFUL, 0xFFFFFFFUL);
-immutable MASK_16 = Bitboard(0x3FFFFFFFFFFFFFUL, 0x1FFFFFFFFFUL);
-immutable MASK_17 = Bitboard(0x7FFFFFFFFFFFFFFFUL, 0x3FFFFFFFFFFFUL);
-immutable MASK_18 = Bitboard(0xFFFFFFFFFFFFFFFFUL, 0x7FFFFFFFFFFFFFUL);
+immutable MASK_12 = strToBB("000000000_000000000_000000000_000000000_000000000_000000000_000000000_111111111_111111111");
+immutable MASK_13 = strToBB("000000000_000000000_000000000_000000000_000000000_000000000_111111111_111111111_111111111");
+immutable MASK_14 = strToBB("000000000_000000000_000000000_000000000_000000000_111111111_111111111_111111111_111111111");
+immutable MASK_15 = strToBB("000000000_000000000_000000000_000000000_111111111_111111111_111111111_111111111_111111111");
+immutable MASK_16 = strToBB("000000000_000000000_000000000_111111111_111111111_111111111_111111111_111111111_111111111");
+immutable MASK_17 = strToBB("000000000_000000000_111111111_111111111_111111111_111111111_111111111_111111111_111111111");
+immutable MASK_18 = strToBB("000000000_111111111_111111111_111111111_111111111_111111111_111111111_111111111_111111111");
 
 immutable MASK_19 = NULLBITBOARD.not;
 
@@ -267,9 +259,8 @@ Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) 
 
   // occupiedのパターンのとき、pos位置の駒の飛び利きパターンを返す
   int genAttacksLine(in int occupied, in int pos, int delegate(int, int)choice) {
-    int a = 0;
+    int a, b;  // 0
     for (int s = pos - 1; s >= 0 && !(a & occupied); s--) a |= 1 << s;
-    int b = 0;
     for (int s = pos + 1; s < 9 && !(b & occupied); s++) b |= 1 << s;
     return choice(a, b);  //香車以外は return a | b;
   }
