@@ -18,8 +18,8 @@ const string[14] KOMA = [ "FU", "KY", "KE", "GI", "KA", "HI", "KI", "OU", "pFU",
 const string[10] KOMA_BB = [ "FU", "KY", "KE", "GI", "KA", "HI", "KI", "OU", "pKA", "pHI" ];
 
 // target文字列をlistの各文字列で置換した文字列を返す
-string generateReplace(string qs, string target, const string[] list) { return list.map !(a => qs.replace(target, a)).join; }
-string generateReplace(string qs, string target1, string target2, const string[2] list) {
+string generateReplace(string qs, string target, in string[] list) { return list.map !(a => qs.replace(target, a)).join; }
+string generateReplace(string qs, string target1, string target2, in string[2] list) {
   return iota(2).map !(a => qs.replace(target1, list[a]).replace(target2, list[(a + 1) & 1])).join;
 }
 unittest {
@@ -80,9 +80,10 @@ class Shogiban {
     ulong _key;
     alias _key this;
 
-    void update(const uint to, const uint koma) @nogc { _key ^= _zobrist[koma - 4][to]; }
+    void update(in uint to, in uint koma) @nogc { _key ^= _zobrist[koma - 4][to]; }
 
-    static immutable ulong[81][28] _zobrist = initZobrist();
+    //乱数テーブル
+    static immutable ulong[81][28] _zobrist = initZobrist();  //コンパイル時に初期化される
     static ulong[81][28] initZobrist() {
       ulong[81][28] z;
       auto gen = Random(77);
@@ -109,10 +110,10 @@ class Shogiban {
       bool isYYXX() @nogc const { return cast(bool)(_a & (mask[idx.XX] << shift[idx.XX])); }
     }.generateReplace("YY", [ "", "p" ])
               .generateReplace("XX", [ "FU", "KY", "KE", "GI", "KI", "KA", "HI", "OU" ]));
-    wstring toString(uint i, uint w) const {
+    uint num(in uint i) const { return (_a >> shift[i]) & mask[i]; }
+    wstring toString(in uint i, in uint w) const {
       immutable wstring strKoma = "歩香桂銀金角飛玉　　";
-      uint n = (_a >> shift[i]) & mask[i];
-      return n ? format(" %s%s%2d %s", w ? "\x1b[31m" : "", strKoma[i], n, w ? "\x1b[39m" : "").to !wstring : "      ";
+      return num(i) ? format(" %s%s%2d %s", w ? "\x1b[31m" : "", strKoma[i], num(i), w ? "\x1b[39m" : "").to !wstring : "      ";
     }
   };
 
