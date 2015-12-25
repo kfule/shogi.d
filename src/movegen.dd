@@ -8,23 +8,21 @@ Move* genMovesBaseYY(bool generateKingMove = true)(in Shogiban pos, Move* mlist,
   immutable offset0 = "YY" == "B" ? 0 : 17;
   immutable offset17 = "YY" == "B" ? 17 : 0;
   mixin(q{
-    //歩成(1-4)、桂成(1-5)
     static if ("XX".startsWith("FU", "KE")) {
+      //歩成(1-4)、桂成(1-5)
       foreach (from; (pos._bbYYXX.b[idx0] & MASK_YYXX.b[idx0]).BitwiseRange !(ulong, offset0))
         foreach (to; (target.b[idx0] & ATTACKS_YYXX[from].b[idx0]).BitwiseRange !(ulong, offset0))
           *(mlist++) = Move(from, to, true);
+      //短い不成(歩と桂馬のfromは5-9なので片面に収まる)
+      foreach (from; (pos._bbYYXX.b[idx1] & MASK_YY.b[idx1]).BitwiseRange !(ulong, offset17))
+        foreach (to; (target.b[idx1] & ATTACKS_YYXX[from].b[idx1]).BitwiseRange !(ulong, offset17))
+          *(mlist++) = Move(from, to, false);
     }
-    //銀成(1-4から1-4)
+    //銀成(1-4から1-4, fromにもtoにも制限をかける)
     static if ("XX" == "GI") {
       foreach (from; (pos._bbYYXX.b[idx0] & MASK_YYXX.b[idx0]).BitwiseRange !(ulong, offset0))
         foreach (to; (target.b[idx0] & ATTACKS_YYXX[from].b[idx0] & MASK_YYXX.b[idx0]).BitwiseRange !(ulong, offset0))
           *(mlist++) = Move(from, to, true);
-    }
-    //短い不成(歩と桂馬は5-9片面)
-    static if ("XX".startsWith("FU", "KE")) {
-      foreach (from; (pos._bbYYXX.b[idx1] & MASK_YY.b[idx1]).BitwiseRange !(ulong, offset17))
-        foreach (to; (target.b[idx1] & ATTACKS_YYXX[from].b[idx1]).BitwiseRange !(ulong, offset17))
-          *(mlist++) = Move(from, to, false);
     }
     //短い不成(XXX ここだけはインデックスなど直接指定)
     static if ("XX".startsWith("GI", "KI", "pFU", "pKY", "pKE", "pGI") || (generateKingMove && "XX" == "OU")) {
@@ -75,10 +73,7 @@ Move* genMovesBaseYY(bool generateKingMove = true)(in Shogiban pos, Move* mlist,
 }
 
 //打ち手生成
-Move* genDropsYY(in Shogiban pos, Move* mlist) @nogc {
-  if (!pos._mochigomaYY) return mlist;
-  return genDropsBaseYY(pos, mlist, pos._bbOccupy.not);
-}
+Move* genDropsYY(in Shogiban pos, Move* mlist) @nogc { return (!pos._mochigomaYY) ? mlist : genDropsBaseYY(pos, mlist, pos._bbOccupy.not); }
 Move* genDropsBaseYY(in Shogiban pos, Move* mlist, Bitboard target) @nogc {
   target.b[1] &= 0xFFFF800000000000UL;  //冗長部分を取り除く
   mixin(q{
