@@ -73,7 +73,7 @@ Move* genMovesBaseYY(bool generateKingMove = true)(in Shogiban pos, Move* mlist,
 }
 
 //打ち手生成
-Move* genDropsYY(in Shogiban pos, Move* mlist) @nogc { return (!pos._mochigomaYY) ? mlist : genDropsBaseYY(pos, mlist, pos._bbOccupy.not); }
+Move* genDropsYY(in Shogiban pos, Move* mlist) @nogc { return (!pos._mochigomaYY) ? mlist : genDropsBaseYY(pos, mlist, ~pos._bbOccupy); }
 Move* genDropsBaseYY(in Shogiban pos, Move* mlist, Bitboard target) @nogc {
   target.b[1] &= 0xFFFF800000000000UL;  //冗長部分を取り除く
   mixin(q{
