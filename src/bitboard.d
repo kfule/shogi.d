@@ -12,8 +12,8 @@ import shogiban;
 version(LDC) {
   import ldc.gccbuiltins_x86;
   import ldc.intrinsics;
-  uint bsf(T)(T src) { return cast(uint) llvm_cttz(src, true); }
-  uint popCnt(T)(T x) { return cast(uint) llvm_ctpop(x); }
+  uint bsf(T)(in T src) { return cast(uint) llvm_cttz(src, true); }
+  uint popCnt(T)(in T x) { return cast(uint) llvm_ctpop(x); }
 }
 version(DigitalMars) {
   import core.bitop;
@@ -48,10 +48,10 @@ struct Bitboard {
   this(in ulong b0, in ulong b1) @nogc { b = [ b0, b1 ]; }
 
   //演算子
-  Bitboard opBinary(string op)(const Bitboard bb) @nogc const { return mixin("Bitboard(a" ~op ~"bb.a)"); }
+  Bitboard opBinary(string op)(in Bitboard bb) @nogc const { return mixin("Bitboard(a" ~op ~"bb.a)"); }
   Bitboard opUnary(string op)() @nogc const if (op == "~") { return Bitboard(~a); }
   //複合代入
-  ref Bitboard opOpAssign(string op)(const Bitboard bb) @nogc if (op != "=") {
+  ref Bitboard opOpAssign(string op)(in Bitboard bb) @nogc if (op != "=") {
     a = opBinary !op(bb).a;
     return this;
   }
@@ -81,23 +81,21 @@ struct Bitboard {
   }
 
   /// 飛車角の利き算出用ハッシュ値の計算
-  auto computeHash(const Bitboard mask) @nogc const {
-    return ((((b[0] & mask.b[0]) << 4) | (b[1] & mask.b[1])) * 0x102040810204081UL) >> 57;
-  }
-  Bitboard ATTACKS_BKY(uint sq) @nogc const { return _ATTACKS_BKY[(sq << 7) | computeHash(_MASK_FILE[sq])]; }
-  Bitboard ATTACKS_WKY(uint sq) @nogc const { return _ATTACKS_WKY[(sq << 7) | computeHash(_MASK_FILE[sq])]; }
-  Bitboard ATTACKS_1199(uint sq) @nogc const { return _ATTACKS_1199[(sq << 7) | computeHash(_MASK_1199[sq])]; }
-  Bitboard ATTACKS_9119(uint sq) @nogc const { return _ATTACKS_9119[(sq << 7) | computeHash(_MASK_9119[sq])]; }
-  Bitboard ATTACKS_RANK(uint sq) @nogc const { return _ATTACKS_RANK[(sq << 7) | computeHash(_MASK_RANK[sq])]; }
-  Bitboard ATTACKS_FILE(uint sq) @nogc const { return _ATTACKS_FILE[(sq << 7) | computeHash(_MASK_FILE[sq])]; }
-  Bitboard ATTACKS_HI(uint sq) @nogc const { return ATTACKS_RANK(sq) | (ATTACKS_FILE(sq)); }
-  Bitboard ATTACKS_KA(uint sq) @nogc const { return ATTACKS_9119(sq) | (ATTACKS_1199(sq)); }
+  auto computeHash(in Bitboard mask) @nogc const { return ((((b[0] & mask.b[0]) << 4) | (b[1] & mask.b[1])) * 0x102040810204081UL) >> 57; }
+  Bitboard ATTACKS_BKY(in uint sq) @nogc const { return _ATTACKS_BKY[(sq << 7) | computeHash(_MASK_FILE[sq])]; }
+  Bitboard ATTACKS_WKY(in uint sq) @nogc const { return _ATTACKS_WKY[(sq << 7) | computeHash(_MASK_FILE[sq])]; }
+  Bitboard ATTACKS_1199(in uint sq) @nogc const { return _ATTACKS_1199[(sq << 7) | computeHash(_MASK_1199[sq])]; }
+  Bitboard ATTACKS_9119(in uint sq) @nogc const { return _ATTACKS_9119[(sq << 7) | computeHash(_MASK_9119[sq])]; }
+  Bitboard ATTACKS_RANK(in uint sq) @nogc const { return _ATTACKS_RANK[(sq << 7) | computeHash(_MASK_RANK[sq])]; }
+  Bitboard ATTACKS_FILE(in uint sq) @nogc const { return _ATTACKS_FILE[(sq << 7) | computeHash(_MASK_FILE[sq])]; }
+  Bitboard ATTACKS_HI(in uint sq) @nogc const { return ATTACKS_RANK(sq) | (ATTACKS_FILE(sq)); }
+  Bitboard ATTACKS_KA(in uint sq) @nogc const { return ATTACKS_9119(sq) | (ATTACKS_1199(sq)); }
   alias ATTACKS_BKA = ATTACKS_KA;
   alias ATTACKS_WKA = ATTACKS_KA;
   alias ATTACKS_BHI = ATTACKS_HI;
   alias ATTACKS_WHI = ATTACKS_HI;
-  Bitboard ATTACKS_pHI(uint sq) @nogc const { return ATTACKS_HI(sq) | (ATTACKS_OU[sq]); }
-  Bitboard ATTACKS_pKA(uint sq) @nogc const { return ATTACKS_KA(sq) | (ATTACKS_OU[sq]); }
+  Bitboard ATTACKS_pHI(in uint sq) @nogc const { return ATTACKS_HI(sq) | (ATTACKS_OU[sq]); }
+  Bitboard ATTACKS_pKA(in uint sq) @nogc const { return ATTACKS_KA(sq) | (ATTACKS_OU[sq]); }
   alias ATTACKS_BpKA = ATTACKS_pKA;
   alias ATTACKS_WpKA = ATTACKS_pKA;
   alias ATTACKS_BpHI = ATTACKS_pHI;
@@ -178,7 +176,7 @@ alias MASK_WKA = MASK_16;
 alias MASK_BHI = MASK_49;  //飛車の不成の移動先
 alias MASK_WHI = MASK_16;
 
-Bitboard[81] expand(Bitboard base40, int delegate(int, int) dg1, int delegate(int, int) dg2, const ulong msk_b0 = ulong.max,
+Bitboard[81] expand(in Bitboard base40, int delegate(int, int) dg1, int delegate(int, int) dg2, const ulong msk_b0 = ulong.max,
                     const ulong msk_b1 = ulong.max) {
   // base40を左右にずらした時にビットが折り返されないようにするマスク
   //ここの書き方はセコい。。
@@ -195,7 +193,7 @@ Bitboard[81] expand(Bitboard base40, int delegate(int, int) dg1, int delegate(in
   Bitboard* MASK_SHIFT = &_MASK_SHIFT[8];
 
   Bitboard[81] list;
-  auto SIGNED_LEFT_SHIFT(const ulong a, const int shift) { return (shift >= 0) ? (a << shift) : (a >> (-shift)); }
+  auto SIGNED_LEFT_SHIFT(in ulong a, in int shift) { return (shift >= 0) ? (a << shift) : (a >> (-shift)); }
   // sq==40(５五)の形を基準に各マスの場合に展開していく
   foreach (i; - 4..5)
     foreach (j; - 4..5)
@@ -264,12 +262,11 @@ alias ATTACKS_WOU = ATTACKS_OU;
 mixin(q{ alias ATTACKS_YYpXX = ATTACKS_YYKI; }.generateReplace("XX", [ "FU", "KY", "KE", "GI" ]).generateReplace("YY", [ "B", "W" ]));
 
 //飛び駒の利きリストを生成する
-Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) getPos, int delegate(int, int) choice,
-                                const Bitboard[] MASK) {
+Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) getPos, int delegate(int, int) choice, in Bitboard[] MASK) {
   Bitboard[81 * 128] list = new Bitboard[81 * 128];
 
   // occupiedのパターンのとき、pos位置の駒の飛び利きパターンを返す
-  int genAttacksLine(const int occupied, const int pos, int delegate(int, int)choice) {
+  int genAttacksLine(in int occupied, in int pos, int delegate(int, int)choice) {
     int a = 0;
     for (int s = pos - 1; s >= 0 && !(a & occupied); s--) a |= 1 << s;
     int b = 0;
@@ -278,7 +275,7 @@ Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) 
   }
 
   // lineのパターンのビットボードを返す
-  Bitboard gen(const uint line, const uint sq) {
+  Bitboard gen(in uint line, in uint sq) {
     Bitboard bb = NULLBITBOARD;
     foreach (uint n; 0..9) {
       if (line & (1 << n)) {
