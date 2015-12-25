@@ -112,6 +112,18 @@ struct Bitboard {
 //空っぽ
 immutable NULLBITBOARD = Bitboard(0, 0);
 
+//文字列(0,1)からビットボードに変換する
+Bitboard strToBB(string str) {
+  auto s = str.replace("_", "");  //アンダースコアは含めて良い(ここで除去)
+  assert(s.length == 81);         //ちょうど81かどうかコンパイル時にも確認可能
+  auto s0 = s[17..81];
+  auto s1 = s[0..64];
+  ulong b0, b1;
+  s0.formattedRead("%b", &b0);
+  s1.formattedRead("%b", &b1);
+  return Bitboard(b0, b1);
+}
+
 //特定の段のマスク
 immutable MASK_1 = strToBB("000000000_000000000_000000000_000000000_000000000_000000000_000000000_000000000_111111111");
 immutable MASK_2 = strToBB("000000000_000000000_000000000_000000000_000000000_000000000_000000000_111111111_000000000");
@@ -168,6 +180,8 @@ alias MASK_WKA = MASK_16;
 alias MASK_BHI = MASK_49;  //飛車の不成の移動先
 alias MASK_WHI = MASK_16;
 
+///駒の利きの展開
+Bitboard[81] expand(string str) { return expand(strToBB(str), (i, j) => 9 * i + j, (i, j) => -j); }
 Bitboard[81] expand(in Bitboard base40, int delegate(int, int) dg1, int delegate(int, int) dg2, const ulong msk_b0 = ulong.max,
                     const ulong msk_b1 = ulong.max) {
   // base40を左右にずらした時にビットが折り返されないようにするマスク
@@ -178,7 +192,7 @@ Bitboard[81] expand(in Bitboard base40, int delegate(int, int) dg1, int delegate
       char[9] s = "000000000";
       foreach (j; 0..min(i + 1, 9)) { s[j] = '1'; }
       foreach (j; 0..i - 8) { s[j] = '0'; }
-      str ~= "Bitboard(0b" ~s[8] ~s ~s ~s ~s ~s ~s ~s ~",0b" ~s ~s ~s ~s ~s ~s ~s ~s[0] ~"),";
+      str ~= "strToBB(\"" ~s ~s ~s ~s ~s ~s ~s ~s ~s ~"\"),";
     }
     return str ~"];";
   }());
@@ -196,6 +210,7 @@ Bitboard[81] expand(in Bitboard base40, int delegate(int, int) dg1, int delegate
     list[i].b[0] |= list[i].b[1] << 17;
     list[i].b[1] |= list[i].b[0] >> 17;
   }
+
   //非冗長化など特殊な処理を最後に実施
   foreach (i; 0..81) {
     list[i].b[0] &= msk_b0;
@@ -203,18 +218,6 @@ Bitboard[81] expand(in Bitboard base40, int delegate(int, int) dg1, int delegate
   }
 
   return list;
-}
-///駒の利きの展開
-Bitboard[81] expand(string str) { return expand(strToBB(str), (i, j) => 9 * i + j, (i, j) => -j); }
-Bitboard strToBB(string str) {
-  auto s = str.replace("_", "");
-  assert(s.length == 81);
-  auto s0 = s[17..81];
-  auto s1 = s[0..64];
-  ulong b0, b1;
-  s0.formattedRead("%b", &b0);
-  s1.formattedRead("%b", &b1);
-  return Bitboard(b0, b1);
 }
 
 immutable Bitboard[81] MASK_SQ = expand("000000000_000000000_000000000_000000000_000010000_000000000_000000000_000000000_000000000");
@@ -225,17 +228,17 @@ unittest {
 }
 
 immutable Bitboard[81] _MASK_1199 =
-    expand(strToBB("100000000_010000000_001000000_000100000_000010000_000001000_000000100_000000010_000000001"), (i, j) { return -i + j; },
-           (i, j) { return i - j; }, 0xFE7F3F9FCFEUL & ~0xC06030180C0603FFUL, 0x7F3F9FCFE0000000UL & ~0xFFC06030180C0603UL);
+    expand(strToBB("100000000_010000000_001000000_000100000_000010000_000001000_000000100_000000010_000000001"), (i, j) => -i + j,
+           (i, j) => i - j, 0xFE7F3F9FCFEUL & ~0xC06030180C0603FFUL, 0x7F3F9FCFE0000000UL & ~0xFFC06030180C0603UL);
 immutable Bitboard[81] _MASK_9119 =
-    expand(strToBB("000000001_000000010_000000100_000001000_000010000_000100000_001000000_010000000_100000000"), (i, j) { return i + j; },
-           (i, j) { return -i - j; }, 0xFE7F3F9FCFEUL & ~0xC06030180C0603FFUL, 0x7F3F9FCFE0000000UL & ~0xFFC06030180C0603UL);
+    expand(strToBB("000000001_000000010_000000100_000001000_000010000_000100000_001000000_010000000_100000000"), (i, j) => i + j,
+           (i, j) => -i - j, 0xFE7F3F9FCFEUL & ~0xC06030180C0603FFUL, 0x7F3F9FCFE0000000UL & ~0xFFC06030180C0603UL);
 immutable Bitboard[81] _MASK_FILE =
-    expand(strToBB("000010000_000010000_000010000_000010000_000010000_000010000_000010000_000010000_000010000"), (i, j) { return j; },
-           (i, j) { return 0; }, 0xFFFFFFE00UL, 0x7FFFFFFFF80000UL);
+    expand(strToBB("000010000_000010000_000010000_000010000_000010000_000010000_000010000_000010000_000010000"), (i, j) => j, (i, j) => 0,
+           0xFFFFFFE00UL, 0x7FFFFFFFF80000UL);
 immutable Bitboard[81] _MASK_RANK =
-    expand(strToBB("000000000_000000000_000000000_000000000_111111111_000000000_000000000_000000000_000000000"), (i, j) { return 9 * i; },
-           (i, j) { return 0; }, 0xFE7F3F9FCFEUL, 0x7F3F9FCFE0000000UL);
+    expand(strToBB("000000000_000000000_000000000_000000000_111111111_000000000_000000000_000000000_000000000"), (i, j) => 9 * i,
+           (i, j) => 0, 0xFE7F3F9FCFEUL, 0x7F3F9FCFE0000000UL);
 
 //駒の利き
 immutable Bitboard[81] ATTACKS_BFU = expand("000000000_000000000_000000000_000000000_000000000_000010000_000000000_000000000_000000000");
