@@ -101,6 +101,8 @@ class Shogiban {
 
   ushort[40] _list40;
   byte[81 + IndexPP.hand_end] _listId;
+  ushort[2] _prevPsq;
+  ushort[2] _nextPsq;
 
   //--------------------------------------------------------
   //  構造体定義
@@ -291,8 +293,10 @@ class Shogiban {
     return id;
   }
  private
-  void write40(in byte id, in int to, in int psq) @nogc {
+  void write40(string act, int i = 0)(in byte id, in int to, in int psq) @nogc {
+    static if (act == "do") { _prevPsq[i] = _list40[id]; }
     _list40[id] = cast(short)psq;
+    static if (act == "do") { _nextPsq[i] = _list40[id]; }
     _listId[to] = id;
   }
 
