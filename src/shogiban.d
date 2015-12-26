@@ -50,6 +50,33 @@ mixin({
   }
   s ~= "none=0};";
 
+  int[string] numMochi = ["FU":18, "KY":4, "KE":4, "GI":4, "KI":4, "KA":2, "HI":2, "OU":2];
+  int[string] numSlide = ["FU":9, "KY":9, "KE":18, "GI":0, "KI":0, "KA":0, "HI":0, "OU":0, "pKA":0, "pHI":0];
+  int idx;
+  s ~= "enum IndexPP{";
+  //持ち駒はゼロ枚目は使わない(のでidx-1)
+  foreach (k;["FU", "KY", "KE", "GI", "KI", "KA", "HI", "OU"]) {
+    s ~= "B_hand_" ~k ~"=" ~(idx - 1).text ~",\n";
+    s ~= "W_hand_" ~k ~"=" ~(idx - 1 + numMochi[k]).text ~",\n";
+    idx += 2 * (numMochi[k]);
+  }
+  s ~= "hand_end=" ~idx.text ~",";
+  foreach (k;["FU", "KY", "KE", "GI", "KI", "KA", "HI", "OU", "pKA", "pHI"]) {
+    s ~= "B_" ~k ~"=" ~(idx - numSlide[k]).text ~",\n";
+    s ~= "W_" ~k ~"=" ~(idx - numSlide[k] + 81).text ~",\n";
+    idx += 2 * (81 - numSlide[k]);
+  }
+  s ~= "end=" ~idx.text ~",";
+  foreach (k;["FU", "KY", "KE", "GI"]) {
+    s ~= "B_p" ~k ~"=B_KI,\n";
+    s ~= "W_p" ~k ~"=W_KI,\n";
+  }
+  foreach (k;["FU", "KY", "KE", "GI", "KA", "HI"]) {
+    s ~= "B_hand_p" ~k ~"=B_hand_" ~k ~",\n";
+    s ~= "W_hand_p" ~k ~"=W_hand_" ~k ~",\n";
+  }
+
+  s ~= "}";
   return s;
 }());
 
@@ -71,6 +98,9 @@ class Shogiban {
 
   //持ち駒
   Mochigoma _mochigomaB = Mochigoma(0), _mochigomaW = Mochigoma(1);
+
+  ushort[40] _list40;
+  byte[81 + IndexPP.hand_end] _listId;
 
   //--------------------------------------------------------
   //  構造体定義
@@ -132,12 +162,14 @@ class Shogiban {
     _bbOccupy = _bbOccupyB = _bbOccupyW = NULLBITBOARD;
     mixin("_bbYYXX = NULLBITBOARD;".generateReplace("XX", KOMA_BB).generateReplace("YY", [ "B", "W" ]));
     _masu[] = komaType.none;
+    _listId[] = -1;
   }
 
   // SFENの読み込み
   void setSFEN(string sfen) {
     setZero();
     immutable string PieceToChar = "____PpLlNnSsBbRrGgKk";
+    ubyte id;
 
     //盤面、手番、持ち駒、手数の文字列に分割
     auto list = sfen.split;
@@ -154,7 +186,8 @@ class Shogiban {
       else if (token == '+')
         promote = 16;
       else if ((idx = cast(int)(PieceToChar.countUntil(token))) != -1) {
-        setKoma(sq, idx + promote);
+        _list40[id] = cast(short)setKoma(sq, idx + promote);
+        _listId[sq] = id++;
         promote = 0;
         sq--;
       }
@@ -172,7 +205,10 @@ class Shogiban {
         num = token - '0' + beforeNum;
         beforeNum = num * 10;
       } else if ((idx = cast(int)(PieceToChar.countUntil(token))) != -1) {
-        foreach (i; 0..num) { setKoma(81, idx); }
+        foreach (i; 0..num) {
+          _list40[id] = cast(short)setKoma(81, idx);
+          _listId[_list40[id] + 81] = id++;
+        }
         num = 1;
         beforeNum = 0;
       }
@@ -181,7 +217,7 @@ class Shogiban {
   }
 
   //駒の設置。初期化や盤面読み込み用
-  void setKoma(in uint sq, in uint kt) {
+  uint setKoma(in uint sq, in uint kt) {
     assert(sq <= 81);
     if (sq == 81) {
       assert(kt < 20);
@@ -191,13 +227,13 @@ class Shogiban {
           case komaType.YYXX:
             static if ("XX".startsWith("FU", "KY", "KE", "GI", "KA", "HI", "KI")) {
               _mochigomaYY.addXX;
-              break;
+              return IndexPP.YY_hand_XX + _mochigomaYY.numXX;
             }
             assert(false);
         }.generateReplace("YY", [ "B", "W" ])
                   .generateReplace("XX", KOMA));
         case komaType.none:
-          break;
+          assert(false);
       }
     } else {
       //盤面への配置
@@ -208,11 +244,11 @@ class Shogiban {
             _bbOccupy |= _bbOccupyYY |= _bbYYXX |= MASK_SQ[sq];
             _masu[sq] = komaType.YYXX;
             _boardHash.update(sq, komaType.YYXX);
-            break;
+            return IndexPP.YY_XX + sq;
         }.generateReplace("YY", [ "B", "W" ])
                   .generateReplace("XX", KOMA));
         case komaType.none:
-          break;
+          assert(false);
       }
     }
   }
@@ -246,6 +282,18 @@ class Shogiban {
     str ~= format("\nHashkey(HandW): %016x", _mochigomaW._a).to !wstring;
     // stringにして返す. もしかしたら文字化けするかも?
     return str.to !string;
+  }
+
+ private
+  byte fetchId(in int from) @nogc {
+    byte id = _listId[from];
+    _listId[from] = -1;
+    return id;
+  }
+ private
+  void write40(in byte id, in int to, in int psq) @nogc {
+    _list40[id] = cast(short)psq;
+    _listId[to] = id;
   }
 
   //盤面更新の展開
