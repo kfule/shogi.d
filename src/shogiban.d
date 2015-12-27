@@ -293,7 +293,7 @@ class Shogiban {
     return id;
   }
  private
-  void write40(string act, int i = 0)(in byte id, in int to, in int psq) @nogc {
+  void write40(string act, int i = 0)(in byte id, in int to, in int psq) @nogc if (act.startsWith("do", "undo")) {
     static if (act == "do") { _prevPsq[i] = _list40[id]; }
     _list40[id] = cast(short)psq;
     static if (act == "do") { _nextPsq[i] = _list40[id]; }
