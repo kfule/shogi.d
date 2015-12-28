@@ -31,6 +31,18 @@ void main() {
 }
 
 immutable string strCaseMain = q{
+  case "d":  // D言語くん
+q{
+ (_) (_)
+/______ |
+||(O(O |/
+ | | | |
+ | |_| |
+/______/
+  <   >
+ (_) (_)
+}.writeln;
+break;
   case "init", "i":  //盤面の初期化
     s.init;
     s.writeln;
