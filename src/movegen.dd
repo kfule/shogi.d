@@ -8,12 +8,24 @@ Move* genMovesBaseYY(bool generateKingMove = true)(in Shogiban pos, Move* mlist,
   immutable offset0 = "YY" == "B" ? 0 : 17;
   immutable offset17 = "YY" == "B" ? 17 : 0;
   mixin(q{
-    static if ("XX".startsWith("FU", "KE")) {
-      //歩成(1-4)、桂成(1-5)
+    static if ("YYXX" == "BFU") {
+      foreach (to; ((pos._bbYYXX.b[idx0] >> 9) & MASK_13.b[idx0] & target.b[idx0]).BitwiseRange !(ulong, offset0))
+        *(mlist++) = Move(to + 9, to, true);
+      foreach (to; ((pos._bbYYXX.b[idx1] >> 9) & MASK_49.b[idx1] & target.b[idx1]).BitwiseRange !(ulong, offset17))
+        *(mlist++) = Move(to + 9, to, false);
+    }
+    static if ("YYXX" == "WFU") {
+      foreach (to; ((pos._bbYYXX.b[idx0] << 9) & MASK_79.b[idx0] & target.b[idx0]).BitwiseRange !(ulong, offset0))
+        *(mlist++) = Move(to - 9, to, true);
+      foreach (to; ((pos._bbYYXX.b[idx1] << 9) & MASK_16.b[idx1] & target.b[idx1]).BitwiseRange !(ulong, offset17))
+        *(mlist++) = Move(to - 9, to, false);
+    }
+    static if ("XX" == "KE") {
+      //桂成(1-5)
       foreach (from; (pos._bbYYXX.b[idx0] & MASK_YYXX.b[idx0]).BitwiseRange !(ulong, offset0))
         foreach (to; (target.b[idx0] & ATTACKS_YYXX[from].b[idx0]).BitwiseRange !(ulong, offset0))
           *(mlist++) = Move(from, to, true);
-      //短い不成(歩と桂馬のfromは5-9なので片面に収まる)
+      //不成(桂馬のfromは5-9なので片面に収まる)
       foreach (from; (pos._bbYYXX.b[idx1] & MASK_YY.b[idx1]).BitwiseRange !(ulong, offset17))
         foreach (to; (target.b[idx1] & ATTACKS_YYXX[from].b[idx1]).BitwiseRange !(ulong, offset17))
           *(mlist++) = Move(from, to, false);
