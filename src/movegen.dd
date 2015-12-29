@@ -46,37 +46,21 @@ Move* genMovesBaseYY(bool generateKingMove = true)(in Shogiban pos, Move* mlist,
           *(mlist++) = Move(from, to, false);
     }
     //飛び利き
-    static if ("XX".startsWith("KY", "KA", "HI")) {
+    static if ("XX".startsWith("KY", "KA", "HI", "pKA", "pHI")) {
       // 1-3の(1-9)の成り
       foreach (from; (pos._bbYYXX.b[idx0] & MASK_PROMOTE_YY.b[idx0]).BitwiseRange !(ulong, offset0)) {
         Bitboard atk = pos._bbOccupy.ATTACKS_YYXX(from);
         foreach (to; (MASK_PROMOTE_YY.b[idx0] & target.b[idx0] & atk.b[idx0]).BitwiseRange !(ulong, offset0))
-          *(mlist++) = Move(from, to, true);
+          *(mlist++) = Move(from, to, ("XX" == "pKA" || "XX" == "pHI") ? false : true);
         foreach (to; (~MASK_PROMOTE_YY.b[idx1] & target.b[idx1] & atk.b[idx1]).BitwiseRange !(ulong, offset17))
-          *(mlist++) = Move(from, to, true);
+          *(mlist++) = Move(from, to, ("XX" == "pKA" || "XX" == "pHI") ? false : true);
       }
       // 4-9で1-3の成, 4-9の不成(香車は３段目の不成も)
       foreach (from; (pos._bbYYXX.b[idx1] & ~MASK_PROMOTE_YY.b[idx1]).BitwiseRange !(ulong, offset17)) {
         Bitboard atk = pos._bbOccupy.ATTACKS_YYXX(from);
         foreach (to; (MASK_PROMOTE_YY.b[idx0] & target.b[idx0] & atk.b[idx0]).BitwiseRange !(ulong, offset0))
-          *(mlist++) = Move(from, to, true);
+          *(mlist++) = Move(from, to, ("XX" == "pKA" || "XX" == "pHI") ? false : true);
         foreach (to; (MASK_YYXX.b[idx1] & target.b[idx1] & atk.b[idx1]).BitwiseRange !(ulong, offset17))
-          *(mlist++) = Move(from, to, false);
-      }
-    }
-    static if ("XX".startsWith("pKA", "pHI")) {
-      foreach (from; (pos._bbYYXX.b[idx0] & MASK_PROMOTE_YY.b[idx0]).BitwiseRange !(ulong, offset0)) {
-        Bitboard atk = pos._bbOccupy.ATTACKS_YYXX(from);
-        foreach (to; (MASK_PROMOTE_YY.b[idx0] & target.b[idx0] & atk.b[idx0]).BitwiseRange !(ulong, offset0))
-          *(mlist++) = Move(from, to, false);
-        foreach (to; (~MASK_PROMOTE_YY.b[idx1] & target.b[idx1] & atk.b[idx1]).BitwiseRange !(ulong, offset17))
-          *(mlist++) = Move(from, to, false);
-      }
-      foreach (from; (pos._bbYYXX.b[idx1] & ~MASK_PROMOTE_YY.b[idx1]).BitwiseRange !(ulong, offset17)) {
-        Bitboard atk = pos._bbOccupy.ATTACKS_YYXX(from);
-        foreach (to; (MASK_PROMOTE_YY.b[idx0] & target.b[idx0] & atk.b[idx0]).BitwiseRange !(ulong, offset0))
-          *(mlist++) = Move(from, to, false);
-        foreach (to; (~MASK_PROMOTE_YY.b[idx1] & target.b[idx1] & atk.b[idx1]).BitwiseRange !(ulong, offset17))
           *(mlist++) = Move(from, to, false);
       }
     }

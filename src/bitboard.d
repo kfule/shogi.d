@@ -163,10 +163,10 @@ alias MASK_BGI = MASK_14;  //銀が成れる移動元/移動先
 alias MASK_WGI = MASK_69;
 alias MASK_BKY = MASK_39;  //香車の不成の移動先
 alias MASK_WKY = MASK_17;
-alias MASK_BKA = MASK_49;  //角の不成の移動先
-alias MASK_WKA = MASK_16;
-alias MASK_BHI = MASK_49;  //飛車の不成の移動先
-alias MASK_WHI = MASK_16;
+mixin(q{
+  alias MASK_BXX = MASK_49;  //不成の移動先
+  alias MASK_WXX = MASK_16;
+}.generateReplace("XX", [ "KA", "HI", "pKA", "pHI" ]));
 
 ///駒の利きの展開
 Bitboard[81] expand(in string str) { return expand((str), (i, j) => 9 * i + j, (i, j) => -j); }
