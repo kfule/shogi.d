@@ -22,11 +22,11 @@ Move* genMovesBaseYY(bool generateKingMove = true)(in Shogiban pos, Move* mlist,
     }
     static if ("XX" == "KE") {
       //桂成(1-5)
-      foreach (from; (pos._bbYYXX.b[idx0] & MASK_YYXX.b[idx0]).BitwiseRange !(ulong, offset0))
+      foreach (from; (pos._bbYYXX.b[idx0] & MASK_YYXXp.b[idx0]).BitwiseRange !(ulong, offset0))
         foreach (to; (target.b[idx0] & ATTACKS_YYXX[from].b[idx0]).BitwiseRange !(ulong, offset0))
           *(mlist++) = Move(from, to, true);
       //不成(桂馬のfromは5-9なので片面に収まる)
-      foreach (from; (pos._bbYYXX.b[idx1] & MASK_YY.b[idx1]).BitwiseRange !(ulong, offset17))
+      foreach (from; (pos._bbYYXX.b[idx1] & MASK_YYXX.b[idx1]).BitwiseRange !(ulong, offset17))
         foreach (to; (target.b[idx1] & ATTACKS_YYXX[from].b[idx1]).BitwiseRange !(ulong, offset17))
           *(mlist++) = Move(from, to, false);
     }
