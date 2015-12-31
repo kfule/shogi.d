@@ -1,11 +1,4 @@
-import std.array;
-import std.range;
-import std.algorithm;
-import std.ascii;
-import std.conv;
-import std.stdio;
-import std.format;
-import std.random;
+import std.algorithm, std.array, std.ascii, std.conv, std.format, std.random, std.range, std.stdio;
 
 import bitboard;
 import move;
@@ -16,16 +9,6 @@ enum Teban { SENTE = 0, GOTE = -1 };
 const string[14] KOMA = [ "FU", "KY", "KE", "GI", "KA", "HI", "KI", "OU", "pFU", "pKY", "pKE", "pGI", "pKA", "pHI" ];
 //文字列mixinで用いる成金を除いた駒文字列
 const string[10] KOMA_BB = [ "FU", "KY", "KE", "GI", "KA", "HI", "KI", "OU", "pKA", "pHI" ];
-
-// target文字列をlistの各文字列で置換した文字列を返す
-string generateReplace(string qs, string target, in string[] list) { return list.map !(a => qs.replace(target, a)).join; }
-string generateReplace(string qs, string target1, string target2, in string[2] list) {
-  return iota(2).map !(a => qs.replace(target1, list[a]).replace(target2, list[(a + 1) & 1])).join;
-}
-unittest {
-  assert("TestXX".generateReplace("XX", [ "aaa", "bbb", "ccc" ]) == "TestaaaTestbbbTestccc");
-  assert("TestYYZZ".generateReplace("YY", "ZZ", [ "B", "W" ]) == "TestBWTestWB");
-}
 
 // enum
 mixin({
