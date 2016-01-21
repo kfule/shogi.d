@@ -90,12 +90,9 @@ struct Bitboard {
 
   /// 飛車角の利き算出用ハッシュ値の計算
   auto computeHash(in Bitboard mask) @nogc const { return ((((b[0] & mask.b[0]) << 4) | (b[1] & mask.b[1])) * 0x102040810204081UL) >> 57; }
-  Bitboard ATTACKS_BKY(in uint sq) @nogc const { return _ATTACKS_BKY[(sq << 7) | computeHash(_MASK_FILE[sq])]; }
-  Bitboard ATTACKS_WKY(in uint sq) @nogc const { return _ATTACKS_WKY[(sq << 7) | computeHash(_MASK_FILE[sq])]; }
-  Bitboard ATTACKS_1199(in uint sq) @nogc const { return _ATTACKS_1199[(sq << 7) | computeHash(_MASK_1199[sq])]; }
-  Bitboard ATTACKS_9119(in uint sq) @nogc const { return _ATTACKS_9119[(sq << 7) | computeHash(_MASK_9119[sq])]; }
-  Bitboard ATTACKS_RANK(in uint sq) @nogc const { return _ATTACKS_RANK[(sq << 7) | computeHash(_MASK_RANK[sq])]; }
-  Bitboard ATTACKS_FILE(in uint sq) @nogc const { return _ATTACKS_FILE[(sq << 7) | computeHash(_MASK_FILE[sq])]; }
+  mixin(q{
+    Bitboard ATTACKS_XX(in uint sq) @nogc const { return _ATTACKS_XX[(sq << 7) | computeHash(_MASK_XX[sq])]; }
+  }.generateReplace("XX", [ "BKY", "WKY", "1199", "9119", "RANK", "FILE" ]));
   Bitboard ATTACKS_HI(in uint sq) @nogc const { return ATTACKS_RANK(sq) | (ATTACKS_FILE(sq)); }
   Bitboard ATTACKS_KA(in uint sq) @nogc const { return ATTACKS_9119(sq) | (ATTACKS_1199(sq)); }
   Bitboard ATTACKS_pHI(in uint sq) @nogc const { return ATTACKS_HI(sq) | (ATTACKS_OU[sq]); }
@@ -227,6 +224,7 @@ immutable Bitboard[81] _MASK_FILE = expand("000010000_000010000_000010000_000010
                                            (i, j) => j, (i, j) => 0, 0xFFFFFFE00UL, 0x7FFFFFFFF80000UL);
 immutable Bitboard[81] _MASK_RANK = expand("000000000_000000000_000000000_000000000_111111111_000000000_000000000_000000000_000000000",
                                            (i, j) => 9 * i, (i, j) => 0, 0xFE7F3F9FCFEUL, 0x7F3F9FCFE0000000UL);
+mixin(q{ alias _MASK_YYKY = _MASK_FILE; }.generateReplace("YY", [ "B", "W" ]));
 
 //駒の利き
 immutable Bitboard[81] ATTACKS_BFU = expand("000000000_000000000_000000000_000000000_000000000_000010000_000000000_000000000_000000000");
@@ -238,8 +236,7 @@ immutable Bitboard[81] ATTACKS_WGI = expand("000000000_000000000_000000000_00011
 immutable Bitboard[81] ATTACKS_BKI = expand("000000000_000000000_000000000_000010000_000101000_000111000_000000000_000000000_000000000");
 immutable Bitboard[81] ATTACKS_WKI = expand("000000000_000000000_000000000_000111000_000101000_000010000_000000000_000000000_000000000");
 immutable Bitboard[81] ATTACKS_OU = expand("_000000000_000000000_000000000_000111000_000101000_000111000_000000000_000000000_000000000");
-alias ATTACKS_BOU = ATTACKS_OU;
-alias ATTACKS_WOU = ATTACKS_OU;
+mixin(q{ alias ATTACKS_YYOU = ATTACKS_OU; }.generateReplace("YY", [ "B", "W" ]));
 
 //成り駒の定数名は文字列mixinのためにpXXで統一する
 mixin(q{ alias ATTACKS_YYpXX = ATTACKS_YYKI; }.generateReplace("XX", [ "FU", "KY", "KE", "GI" ]).generateReplace("YY", [ "B", "W" ]));
