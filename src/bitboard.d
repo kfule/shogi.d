@@ -159,8 +159,8 @@ alias MASK_BKEp = MASK_15;  //桂馬が成れる移動元
 alias MASK_WKEp = MASK_59;
 alias MASK_BKE = MASK_59;  //桂馬の不成の移動元
 alias MASK_WKE = MASK_15;
-alias MASK_BGI = MASK_14;  //銀が成れる移動元/移動先
-alias MASK_WGI = MASK_69;
+alias MASK_BGIp = MASK_14;  //銀が成れる移動元/移動先
+alias MASK_WGIp = MASK_69;
 alias MASK_BKY = MASK_39;  //香車の不成の移動先
 alias MASK_WKY = MASK_17;
 mixin(q{
