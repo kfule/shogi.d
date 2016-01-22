@@ -32,8 +32,8 @@ Move* genMovesBaseYY(bool generateKingMove = true)(in Shogiban pos, Move* mlist,
     }
     //銀成(1-4から1-4, fromにもtoにも制限をかける)
     static if ("XX" == "GI") {
-      foreach (from; (pos._bbYYXX.b[idx0] & MASK_YYXX.b[idx0]).BitwiseRange !(ulong, offset0))
-        foreach (to; (target.b[idx0] & ATTACKS_YYXX[from].b[idx0] & MASK_YYXX.b[idx0]).BitwiseRange !(ulong, offset0))
+      foreach (from; (pos._bbYYXX.b[idx0] & MASK_YYXXp.b[idx0]).BitwiseRange !(ulong, offset0))
+        foreach (to; (target.b[idx0] & ATTACKS_YYXX[from].b[idx0] & MASK_YYXXp.b[idx0]).BitwiseRange !(ulong, offset0))
           *(mlist++) = Move(from, to, true);
     }
     //短い不成(XXX ここだけはインデックスなど直接指定)
@@ -52,8 +52,11 @@ Move* genMovesBaseYY(bool generateKingMove = true)(in Shogiban pos, Move* mlist,
         Bitboard atk = pos._bbOccupy.ATTACKS_YYXX(from);
         foreach (to; (MASK_PROMOTE_YY.b[idx0] & target.b[idx0] & atk.b[idx0]).BitwiseRange !(ulong, offset0))
           *(mlist++) = Move(from, to, ("XX" == "pKA" || "XX" == "pHI") ? false : true);
-        foreach (to; (~MASK_PROMOTE_YY.b[idx1] & target.b[idx1] & atk.b[idx1]).BitwiseRange !(ulong, offset17))
-          *(mlist++) = Move(from, to, ("XX" == "pKA" || "XX" == "pHI") ? false : true);
+        //香車は後退できない
+        static if ("XX" != "KY") {
+          foreach (to; (~MASK_PROMOTE_YY.b[idx1] & target.b[idx1] & atk.b[idx1]).BitwiseRange !(ulong, offset17))
+            *(mlist++) = Move(from, to, ("XX" == "pKA" || "XX" == "pHI") ? false : true);
+        }
       }
       // 4-9で1-3の成, 4-9の不成(香車は３段目の不成も)
       foreach (from; (pos._bbYYXX.b[idx1] & ~MASK_PROMOTE_YY.b[idx1]).BitwiseRange !(ulong, offset17)) {
