@@ -3,6 +3,7 @@ Move* genMovesYY(in Shogiban pos, Move* mlist) @nogc { return pos.genMovesBaseYY
 Move* genCaptureYY(in Shogiban pos, Move* mlist) @nogc { return pos.genMovesBaseYY(mlist, pos._bbOccupyZZ); }
 Move* genNoCaptureYY(in Shogiban pos, Move* mlist) @nogc { return pos.genMovesBaseYY(mlist, ~pos._bbOccupy); }
 Move* genMovesBaseYY(bool generateKingMove = true)(in Shogiban pos, Move* mlist, Bitboard target) @nogc {
+  static assert("YY" == "B" || "YY" == "W");
   immutable idx0 = "YY" == "B" ? 0 : 1;
   immutable idx1 = "YY" == "B" ? 1 : 0;
   immutable offset0 = "YY" == "B" ? 0 : 17;
@@ -74,6 +75,7 @@ Move* genMovesBaseYY(bool generateKingMove = true)(in Shogiban pos, Move* mlist,
 //打ち手生成
 Move* genDropsYY(in Shogiban pos, Move* mlist) @nogc { return (!pos._mochigomaYY) ? mlist : genDropsBaseYY(pos, mlist, ~pos._bbOccupy); }
 Move* genDropsBaseYY(in Shogiban pos, Move* mlist, Bitboard target) @nogc {
+  static assert("YY" == "B" || "YY" == "W");
   target.b[1] &= 0xFFFF800000000000UL;  //冗長部分を取り除く
   mixin(q{
     if (pos._mochigomaYY.isXX) {

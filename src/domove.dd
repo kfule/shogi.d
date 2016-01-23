@@ -2,9 +2,11 @@
 // doMoveは盤面を戻す情報を含めた指し手を返す
 // undoMoveはdoMoveから返された手を用いて指される前の盤面に戻す
 auto ACTMove(Move m) @nogc {
+  static assert("ACT" == "do" || "ACT" == "undo");
   _teban = ~_teban;
   uint to = m.getTo;
   byte movId, capId;
+  static if ("ACT" == "undo") { _masu[to] = komaType.none; }
   if (m.isDrop) {
     //打つ手
     final switch (cast(komaType) m.getDropPiece) {
@@ -13,7 +15,6 @@ auto ACTMove(Move m) @nogc {
           static if ("XX".startsWith("FU", "KY", "KE", "GI", "KA", "HI", "KI")) {
             static if ("ACT" == "do") { _masu[to] = komaType.YYXX; }
             static if ("ACT" == "do") { _mochigomaYY.remXX; }
-            static if ("ACT" == "undo") { _masu[to] = komaType.none; }
             static if ("ACT" == "undo") { _mochigomaYY.addXX; }
             static if ("ACT" == "do") { movId = fetchId(81 + IndexPP.YY_hand_XX + _mochigomaYY.numXX + 1); }
             static if ("ACT" == "do") { write40 !("do")(movId, to, IndexPP.YY_XX + to); }
@@ -36,7 +37,6 @@ auto ACTMove(Move m) @nogc {
     uint from = m.getFrom;
     static if ("ACT" == "do") { m.setUndoInfo(_masu[from], _masu[to]); }
     static if ("ACT" == "do") { _masu[from] = komaType.none; }
-    static if ("ACT" == "undo") { _masu[to] = komaType.none; }
     static if ("ACT" == "do") { movId = fetchId(from); }
     static if ("ACT" == "undo") { movId = fetchId(to); }
     static if ("ACT" == "do") { capId = fetchId(to); }
