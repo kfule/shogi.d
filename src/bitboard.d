@@ -243,7 +243,7 @@ mixin(q{ alias ATTACKS_YYpXX = ATTACKS_YYKI; }.generateReplace("XX", [ "FU", "KY
 
 //飛び駒の利きリストを生成する
 Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) getPos, int delegate(int, int) choice, in Bitboard[] MASK) {
-  Bitboard[81 * 128] list = new Bitboard[81 * 128];
+  Bitboard[81 * 128] list;
 
   // occupiedのパターンのとき、pos位置の駒の飛び利きパターンを返す
   int genAttacksLine(in int occupied, in int pos, int delegate(int, int)choice) {
