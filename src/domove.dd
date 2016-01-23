@@ -5,6 +5,7 @@ auto ACTMove(Move m) @nogc {
   static assert("ACT" == "do" || "ACT" == "undo");
   _teban = ~_teban;
   uint to = m.getTo;
+  static if ("ACT" == "undo") { _masu[to] = komaType.none; }
   if (m.isDrop) {
     //打つ手
     final switch (cast(komaType) m.getDropPiece) {
@@ -13,7 +14,6 @@ auto ACTMove(Move m) @nogc {
           static if ("XX".startsWith("FU", "KY", "KE", "GI", "KA", "HI", "KI")) {
             static if ("ACT" == "do") { _masu[to] = komaType.YYXX; }
             static if ("ACT" == "do") { _mochigomaYY.remXX; }
-            static if ("ACT" == "undo") { _masu[to] = komaType.none; }
             static if ("ACT" == "undo") { _mochigomaYY.addXX; }
             _bbYYXX ^= MASK_SQ[to];
             _bbOccupyYY ^= MASK_SQ[to];
@@ -32,7 +32,6 @@ auto ACTMove(Move m) @nogc {
     uint from = m.getFrom;
     static if ("ACT" == "do") { m.setUndoInfo(_masu[from], _masu[to]); }
     static if ("ACT" == "do") { _masu[from] = komaType.none; }
-    static if ("ACT" == "undo") { _masu[to] = komaType.none; }
 
     //成りフラグを含めた駒別の処理
     final switch (cast(komaTypeWP) m.getMovePieceWithIsPromote) {
