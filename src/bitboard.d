@@ -16,7 +16,7 @@ version(DigitalMars) {
 // target文字列をlistの各文字列で置換した文字列を返す
 string generateReplace(string qs, string target, in string[] list) { return list.map !(a => qs.replace(target, a)).join; }
 string generateReplace(string qs, string target1, string target2, in string[2] list) {
-  return iota(2).map !(a => qs.replace(target1, list[a]).replace(target2, list[(a + 1) & 1])).join;
+  return list.array.permutations.map !(a => qs.replace(target1, a[0]).replace(target2, a[1])).join;
 }
 unittest {
   assert("TestXX".generateReplace("XX", [ "aaa", "bbb", "ccc" ]) == "TestaaaTestbbbTestccc");
