@@ -174,15 +174,10 @@ Bitboard[81] expand(in string str, int delegate(int, int) dg1, int delegate(int,
                     const ulong msk_b1 = ulong.max) {
   Bitboard base40 = Bitboard(str);
   // base40を左右にずらした時にビットが折り返されないようにするマスク
-  //ここの書き方はセコい。。
   mixin({
+    string baseStr = "0000000011111111100000000";
     string str = "Bitboard[17] _MASK_SHIFT = [";
-    foreach (i; 0..17) {
-      char[9] s = "000000000";
-      foreach (j; 0..min(i + 1, 9)) { s[j] = '1'; }
-      foreach (j; 0..i - 8) { s[j] = '0'; }
-      str ~= "Bitboard(\"" ~s ~s ~s ~s ~s ~s ~s ~s ~s ~"\"),";
-    }
+    foreach (i; 0..17) { str ~= "Bitboard(\"" ~replicate(baseStr[16 - i..25 - i], 9) ~"\"),"; }
     return str ~"];";
   }());
   Bitboard* MASK_SHIFT = &_MASK_SHIFT[8];
