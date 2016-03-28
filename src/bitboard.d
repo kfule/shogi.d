@@ -3,8 +3,7 @@
  */
 import std.algorithm, std.compiler, std.conv, std.format, std.range, std.string, core.simd;
 version(LDC) {
-  import ldc.gccbuiltins_x86;
-  import ldc.intrinsics;
+  import ldc.gccbuiltins_x86, ldc.intrinsics;
   uint bsf(T)(in T src) { return cast(uint) llvm_cttz(src, true); }
   uint popCnt(T)(in T x) { return cast(uint) llvm_ctpop(x); }
 }
@@ -47,12 +46,10 @@ struct Bitboard {
   this(in ulong b0, in ulong b1) @nogc { b = [ b0, b1 ]; }
   /// ditto
   this(in string str) {
-    auto s = str.replace("_", "");  //アンダースコアは含めて良い(ここで除去)
-    assert(s.length == 81);         //ちょうど81かどうかコンパイル時にも確認可能
-    auto s0 = s[17..81];
-    auto s1 = s[0..64];
-    s0.formattedRead("%b", &b[0]);
-    s1.formattedRead("%b", &b[1]);
+    //アンダースコアは含めて良い, またassertでちょうど81かどうかコンパイル時にも確認可能
+    assert(str.replace("_", "").length == 81);
+    (s => (s = s.replace("_", "")[17..81]).formattedRead("%b", &b[0]))(str.dup);
+    (s => (s = s.replace("_", "")[0..64]).formattedRead("%b", &b[1]))(str.dup);
   }
 
   //演算子
@@ -188,16 +185,10 @@ Bitboard[81] expand(in string str, int delegate(int, int) dg1, int delegate(int,
       list[40 + 9 * i + j] = Bitboard(SIGNED_LEFT_SHIFT(base40.b[0], dg1(i, j)) & MASK_SHIFT[dg2(i, j)].b[0],
                                       SIGNED_LEFT_SHIFT(base40.b[1], dg1(i, j)) & MASK_SHIFT[dg2(i, j)].b[1]);
   //冗長な部分が一致するようにOR代入
-  foreach (i; 0..81) {
-    list[i].b[0] |= list[i].b[1] << 17;
-    list[i].b[1] |= list[i].b[0] >> 17;
-  }
+  foreach (ref a; list) { a = Bitboard(a.b[0] | (a.b[1] << 17), a.b[1] | (a.b[0] >> 17)); }
 
   //非冗長化など特殊な処理を最後に実施
-  foreach (i; 0..81) {
-    list[i].b[0] &= msk_b0;
-    list[i].b[1] &= msk_b1;
-  }
+  foreach (ref a; list) { a = Bitboard(a.b[0] & msk_b0, a.b[1] & msk_b1); }
 
   return list;
 }
