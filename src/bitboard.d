@@ -55,11 +55,7 @@ struct Bitboard {
   //演算子
   Bitboard opBinary(string op)(in Bitboard bb) @nogc const { return mixin("Bitboard(a" ~op ~"bb.a)"); }
   Bitboard opUnary(string op)() @nogc const if (op == "~") { return Bitboard(~a); }
-  //複合代入
-  ref Bitboard opOpAssign(string op)(in Bitboard bb) @nogc if (op != "=") {
-    a = opBinary !op(bb).a;
-    return this;
-  }
+  ref Bitboard opOpAssign(string op)(in Bitboard bb) @nogc if (op != "=") { return this = opBinary !op(bb); }
   bool opCast(T)() const if (is(T == bool)&&vendor == Vendor.llvm) { return !__builtin_ia32_ptestz128(a, a); }
   bool opCast(T)() const if (is(T == bool)&&vendor != Vendor.llvm) { return cast(bool)(b[0] | b[1]); }
 
