@@ -49,7 +49,7 @@ struct Bitboard {
     //アンダースコアは含めて良い, またassertでちょうど81かどうかコンパイル時にも確認可能
     assert(str.replace("_", "").length == 81);
     (s => (s = s.replace("_", "")[17..81]).formattedRead("%b", &b[0]))(str.dup);
-    (s => (s = s.replace("_", "")[0..64]).formattedRead("%b", &b[1]))(str.dup);
+    (s => (s = s.replace("_", "")[0_..64]).formattedRead("%b", &b[1]))(str.dup);
   }
 
   //演算子
@@ -77,7 +77,7 @@ struct Bitboard {
     foreach (i; 0..9) {
       foreach_reverse(j; 0..9) { s ~= (this & MASK_SQ[i * 9 + j]) ? "●" : "・"; }
       s ~= " ";
-      foreach_reverse(j; 0..9) { s ~= (i * 9 + j < 64) ? ((b[0] & MASK_SQ[i * 9 + j].b[0]) ? "●" : "・") : "  "; }
+      foreach_reverse(j; 0..9) { s ~= (i * 9 + j < 64_) ? ((b[0] & MASK_SQ[i * 9 + j].b[0]) ? "●" : "・") : "  "; }
       s ~= " ";
       foreach_reverse(j; 0..9) { s ~= (i * 9 + j >= 17) ? ((b[1] & MASK_SQ[i * 9 + j].b[1]) ? "●" : "・") : "  "; }
       s ~= "\n";
@@ -233,7 +233,7 @@ Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) 
   int genAttacksLine(in int occupied, in int pos) {
     int a, b;  // 0
     for (int s = pos - 1; s >= 0 && !(a & occupied); s--) a |= 1 << s;
-    for (int s = pos + 1; s < 9 && !(b & occupied); s++) b |= 1 << s;
+    for (int s = pos + 1; s < 9_ && !(b & occupied); s++) b |= 1 << s;
     return choice(a, b);  //香車以外は return a | b;
   }
 
