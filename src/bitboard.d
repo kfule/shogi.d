@@ -75,12 +75,9 @@ struct Bitboard {
   string toString() const {
     string s;
     foreach (i; 0..9) {
-      foreach_reverse(j; 0..9) { s ~= (this & MASK_SQ[i * 9 + j]) ? "●" : "・"; }
-      s ~= " ";
-      foreach_reverse(j; 0..9) { s ~= (i * 9 + j < 64_) ? ((b[0] & MASK_SQ[i * 9 + j].b[0]) ? "●" : "・") : "  "; }
-      s ~= " ";
-      foreach_reverse(j; 0..9) { s ~= (i * 9 + j >= 17) ? ((b[1] & MASK_SQ[i * 9 + j].b[1]) ? "●" : "・") : "  "; }
-      s ~= "\n";
+      foreach_reverse(j; 0..10) { s ~= (j < 9) ? ((this & MASK_SQ[i * 9 + j]) ? "●" : "・") : "\n"; }
+      foreach_reverse(j; 0..10) { s ~= (j < 9 && i * 9 + j < 64_) ? ((b[0] & MASK_SQ[i * 9 + j].b[0]) ? "●" : "・") : "  "; }
+      foreach_reverse(j; 0..10) { s ~= (j < 9 && i * 9 + j >= 17) ? ((b[1] & MASK_SQ[i * 9 + j].b[1]) ? "●" : "・") : "  "; }
     }
     return s;
   }
