@@ -226,12 +226,12 @@ Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) 
   }
 
   // lineのパターンのビットボードを返す
-  Bitboard gen(in uint line, in uint sq) {
+  Bitboard genBB(in uint line, in uint sq) {
     Bitboard bb = NULLBITBOARD;
-    foreach (uint n; 0..9) {
+    foreach (n; 0..9) {
       if (line & (1 << n)) {
         uint lineSq = getSq(sq, n);  // lineの位置を2次元に
-        if (0 <= lineSq && lineSq < 81) {
+        if (lineSq < 81) {
           bb.b[0] |= MASK_SQ[lineSq].b[0];
           bb.b[1] |= MASK_SQ[lineSq].b[1];
         }
@@ -241,15 +241,14 @@ Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) 
   }
 
   //直線上に並ぶ駒の配置(2^7=128パターン)別で飛び利きを初期化
-  foreach (uint occupied; 0..128) {
-    foreach (uint sq; 0..81) {
+  foreach (occupied; 0..128) {
+    foreach (sq; 0..81) {
       //駒の配置パターンをビットボードに落とし込みhashを算出
       int occupied_line = occupied << 1;
-      ulong hash = gen(occupied_line, sq).computeHash(MASK[sq]);
+      ulong hash = (sq << 7) | genBB(occupied_line, sq).computeHash(MASK[sq]);
 
       //駒の配置に対する利きを生成
-      int attacks_line = genAttacksLine(occupied_line, getPos(sq));
-      list[(sq << 7) | hash] = gen(attacks_line, sq);
+      list[hash] = genBB(genAttacksLine(occupied_line, getPos(sq)), sq);
     }
   }
   return list;
