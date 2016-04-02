@@ -58,6 +58,8 @@ struct Bitboard {
   ref Bitboard opOpAssign(string op)(in Bitboard bb) @nogc if (op != "=") { return this = opBinary !op(bb); }
   bool opCast(T)() const if (is(T == bool)&&vendor == Vendor.llvm) { return !__builtin_ia32_ptestz128(a, a); }
   bool opCast(T)() const if (is(T == bool)&&vendor != Vendor.llvm) { return cast(bool)(b[0] | b[1]); }
+  Bitboard opBin(string op)(in Bitboard bb) @nogc const { return mixin("Bitboard(b[0]" ~op ~"bb.b[0],b[1]" ~op ~"bb.b[1])"); }
+  Bitboard opBin(string op)(in int i) @nogc const { return mixin("Bitboard(b[0]" ~op ~"i,b[1]" ~op ~"i)"); }
 
   ///ビット数を数える
   uint popCnt() @nogc const { return.popCnt(b[0]) +.popCnt(b[1] & ~0x7FFFFFFFFFFFUL); }
@@ -154,29 +156,22 @@ mixin(q{
 }.generateReplace("XX", [ "KA", "HI", "pKA", "pHI" ]));
 
 ///駒の利きの展開
-Bitboard[81] expand(in string str) { return expand((str), (i, j) => 9 * i + j, (i, j) => -j); }
-Bitboard[81] expand(in string str, int delegate(int, int) dg1, int delegate(int, int) dg2, const ulong msk_b0 = ulong.max,
-                    const ulong msk_b1 = ulong.max) {
-  Bitboard base40 = Bitboard(str);
-
-  // base40を左右にずらした時にビットが折り返されないようにするマスク
+Bitboard[81] expand(in string str) { return expand(str, (i, j) => 9 * i + j, (i, j) => -j, ulong.max, ulong.max); }
+Bitboard[81] expand(in string str, int delegate(int, int) dg1, int delegate(int, int) dg2, const ulong msk_b0, const ulong msk_b1) {
+  // 左右にずらした時にビットが折り返されないようにするマスク
   Bitboard[17] _MASK_SHIFT;
-  string baseStr = "0000000011111111100000000";
-  foreach (i; 0..17) { _MASK_SHIFT[i] = Bitboard(replicate(baseStr[16 - i..25 - i], 9)); }
+  foreach (i; 0..17) { _MASK_SHIFT[i] = Bitboard(replicate("0000000011111111100000000"[16 - i..25 - i], 9)); }
   Bitboard* MASK_SHIFT = &_MASK_SHIFT[8];
 
   Bitboard[81] list;
-  auto SIGNED_LEFT_SHIFT(in ulong a, in int shift) { return (shift >= 0) ? (a << shift) : (a >> (-shift)); }
+  auto SIGNED_LEFT_SHIFT(in Bitboard a, in int shift) { return shift >= 0 ? a.opBin !"<<"(shift) : a.opBin !">>"(-shift); }
   // sq==40(５五)の形を基準に各マスの場合に展開していく
   foreach (i; - 4..5)
     foreach (j; - 4..5)
-      list[40 + 9 * i + j] = Bitboard(SIGNED_LEFT_SHIFT(base40.b[0], dg1(i, j)) & MASK_SHIFT[dg2(i, j)].b[0],
-                                      SIGNED_LEFT_SHIFT(base40.b[1], dg1(i, j)) & MASK_SHIFT[dg2(i, j)].b[1]);
-  //冗長な部分が一致するようにOR代入
-  foreach (ref a; list) { a = Bitboard(a.b[0] | (a.b[1] << 17), a.b[1] | (a.b[0] >> 17)); }
+      list[40 + 9 * i + j] = SIGNED_LEFT_SHIFT(Bitboard(str), dg1(i, j)).opBin !"&"(MASK_SHIFT[dg2(i, j)]);
 
-  //非冗長化など特殊な処理を最後に実施
-  foreach (ref a; list) { a = Bitboard(a.b[0] & msk_b0, a.b[1] & msk_b1); }
+  //冗長な部分が一致するようにOR代入した上で, 非冗長化などのマスク処理を行う
+  foreach (ref a; list) { a = a.opBin !"|"(Bitboard(a.b[1] << 17, a.b[0] >> 17)).opBin !"&"(Bitboard(msk_b0, msk_b1)); }
 
   return list;
 }
@@ -231,10 +226,7 @@ Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) 
     foreach (n; 0..9) {
       if (line & (1 << n)) {
         uint lineSq = getSq(sq, n);  // lineの位置を2次元に
-        if (lineSq < 81) {
-          bb.b[0] |= MASK_SQ[lineSq].b[0];
-          bb.b[1] |= MASK_SQ[lineSq].b[1];
-        }
+        if (lineSq < 81) bb = bb.opBin !"|"(MASK_SQ[lineSq]);
       }
     }
     return bb;
