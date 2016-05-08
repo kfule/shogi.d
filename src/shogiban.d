@@ -105,7 +105,7 @@ class Shogiban {
   //-------------------------------------------------------
 
   // SFENの読み込み
-  this(string sfen = "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1") {
+  this(in string sfen = "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1") {
     immutable PieceToChar = "____PpLlNnSsBbRrGgKk";
 
     //盤面、手番、持ち駒、手数の文字列に分割

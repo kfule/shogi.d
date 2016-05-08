@@ -77,7 +77,7 @@ void testRandomMove(bool reverse = false)() {
 }
 
 ///手生成の速度測定
-void testMovegen(string sfen) {
+void testMovegen(in string sfen) {
   auto s = new Shogiban(sfen);
   s.writeln;
   Move[1024] buf;
