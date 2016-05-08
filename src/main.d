@@ -13,7 +13,6 @@ import testcode;
 
 void main() {
   auto s = new Shogiban;
-  s.init;
   s.writeln;
 
   //コマンド受付
@@ -32,7 +31,7 @@ void main() {
 
 immutable string strCaseMain = q{
   case "init", "i":  //盤面の初期化
-    s.init;
+    s = new Shogiban;
     s.writeln;
     break;
   case "print", "p":  //盤面の表示

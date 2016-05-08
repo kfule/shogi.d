@@ -24,10 +24,9 @@ immutable string strCaseTest = q{
 //ランダムに玉が取られるまで手を進める, を繰り返すテスト
 // reverse: trueのとき終局から初期局面まで巻き戻す処理も実施
 void testRandomMove(bool reverse = false)() {
-  //auto gen = Random(10);
+  // auto gen = Random(10);
   auto gen = Xorshift(10);
   auto s = new Shogiban;
-  s.init;
   Move[1024] buf;
   Move* mlist;
   Move[] ml;
@@ -39,7 +38,7 @@ void testRandomMove(bool reverse = false)() {
   foreach (i; 0..100000) {
     if (i % 10000 == 0) i.writeln;
     static if (reverse) mlback = mlback.init;
-    static if (!reverse) s.init;
+    static if (!reverse) s = new Shogiban;
     while (true) {
       //手生成
       mlist = buf.ptr;
@@ -79,8 +78,7 @@ void testRandomMove(bool reverse = false)() {
 
 ///手生成の速度測定
 void testMovegen(string sfen) {
-  auto s = new Shogiban;
-  s.setSFEN(sfen);
+  auto s = new Shogiban(sfen);
   s.writeln;
   Move[1024] buf;
   Move* mlist;

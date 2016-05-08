@@ -104,22 +104,8 @@ class Shogiban {
   //  初期化とか局面のセットとか
   //-------------------------------------------------------
 
-  void init() { setSFEN("lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1"); }
-
-  void setZero() {
-    _boardHash = 0;
-    _teban = Teban.SENTE;
-    _mochigomaB.init(0);
-    _mochigomaW.init(1);
-
-    _bbOccupy = _bbOccupyB = _bbOccupyW = NULLBITBOARD;
-    mixin("_bbYYXX = NULLBITBOARD;".generateReplace("XX", KOMA_BB).generateReplace("YY", [ "B", "W" ]));
-    _masu[] = komaType.none;
-  }
-
   // SFENの読み込み
-  void setSFEN(string sfen) {
-    setZero();
+  this(string sfen = "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1") {
     immutable PieceToChar = "____PpLlNnSsBbRrGgKk";
 
     //盤面、手番、持ち駒、手数の文字列に分割
