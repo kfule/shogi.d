@@ -15,9 +15,7 @@ auto ACTMove(Move m) @nogc {
             static if ("ACT" == "do") { _masu[to] = komaType.YYXX; }
             static if ("ACT" == "do") { _mochigomaYY.remXX; }
             static if ("ACT" == "undo") { _mochigomaYY.addXX; }
-            _bbYYXX ^= MASK_SQ[to];
-            _bbOccupyYY ^= MASK_SQ[to];
-            _bbOccupy ^= MASK_SQ[to];
+            mixin(q{ BB ^= MASK_SQ[to]; }.generateReplace("BB", [ "_bbYYXX", "_bbOccupyYY", "_bbOccupy" ]));
             _boardHash.update(to, komaType.YYXX);
             break;
           }
@@ -39,9 +37,7 @@ auto ACTMove(Move m) @nogc {
         case komaTypeWP.YYXX:
           static if ("ACT" == "do") { _masu[to] = komaType.YYXX; }
           static if ("ACT" == "undo") { _masu[from] = komaType.YYXX; }
-          _bbYYXX ^= MASK_SQ[from] | MASK_SQ[to];
-          _bbOccupyYY ^= MASK_SQ[from] | MASK_SQ[to];
-          _bbOccupy ^= MASK_SQ[from] | MASK_SQ[to];
+          mixin(q{ BB ^= MASK_SQ[from] | MASK_SQ[to]; }.generateReplace("BB", [ "_bbYYXX", "_bbOccupyYY", "_bbOccupy" ]));
           _boardHash.update(from, komaType.YYXX);
           _boardHash.update(to, komaType.YYXX);
           break;
@@ -52,8 +48,7 @@ auto ACTMove(Move m) @nogc {
               static if ("ACT" == "undo") { _masu[from] = komaType.YYXX; }
               _bbYYXX ^= MASK_SQ[from];
               _bbYYpXX ^= MASK_SQ[to];
-              _bbOccupyYY ^= MASK_SQ[from] | MASK_SQ[to];
-              _bbOccupy ^= MASK_SQ[from] | MASK_SQ[to];
+              mixin(q{ BB ^= MASK_SQ[from] | MASK_SQ[to]; }.generateReplace("BB", [ "_bbOccupyYY", "_bbOccupy" ]));
               _boardHash.update(from, komaType.YYXX);
               _boardHash.update(to, komaType.YYpXX);
               break;
@@ -70,9 +65,7 @@ auto ACTMove(Move m) @nogc {
         static if ("ACT" == "do") { _mochigomaZZ.addXX; }
         static if ("ACT" == "undo") { _mochigomaZZ.remXX; }
         static if ("ACT" == "undo") { _masu[to] = komaType.YYXX; }
-        _bbYYXX ^= MASK_SQ[to];
-        _bbOccupyYY ^= MASK_SQ[to];
-        _bbOccupy ^= MASK_SQ[to];
+        mixin(q{ BB ^= MASK_SQ[to]; }.generateReplace("BB", [ "_bbYYXX", "_bbOccupyYY", "_bbOccupy" ]));
         _boardHash.update(to, komaType.YYXX);
         break;
     }.generateReplace("YY", "ZZ", [ "B", "W" ])
