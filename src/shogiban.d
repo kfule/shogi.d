@@ -120,7 +120,7 @@ class Shogiban {
   // SFENの読み込み
   void setSFEN(string sfen) {
     setZero();
-    immutable string PieceToChar = "____PpLlNnSsBbRrGgKk";
+    immutable PieceToChar = "____PpLlNnSsBbRrGgKk";
 
     //盤面、手番、持ち駒、手数の文字列に分割
     auto list = sfen.split;
@@ -137,7 +137,7 @@ class Shogiban {
       else if (token == '+')
         promote = 16;
       else if ((idx = cast(int)(PieceToChar.countUntil(token))) != -1) {
-        setKoma(sq, idx + promote);
+        setKomaToBoard(idx + promote, sq);
         promote = 0;
         sq--;
       }
@@ -155,7 +155,7 @@ class Shogiban {
         num = token - '0' + beforeNum;
         beforeNum = num * 10;
       } else if ((idx = cast(int)(PieceToChar.countUntil(token))) != -1) {
-        foreach (i; 0..num) { setKoma(81, idx); }
+        foreach (_; 0..num) { setKomaToHand(idx); }
         num = 1;
         beforeNum = 0;
       }
@@ -164,39 +164,36 @@ class Shogiban {
   }
 
   //駒の設置。初期化や盤面読み込み用
-  void setKoma(in uint sq, in uint kt) {
-    assert(sq <= 81);
-    if (sq == 81) {
-      assert(kt < 20);
-      //持ち駒への配置
-      final switch (cast(komaType) kt) {
-        mixin(q{
-          case komaType.YYXX:
-            static if ("XX".startsWith("FU", "KY", "KE", "GI", "KA", "HI", "KI")) {
-              _mochigomaYY.addXX;
-              break;
-            }
-            assert(false);
-        }.generateReplace("YY", [ "B", "W" ])
-                  .generateReplace("XX", KOMA));
-        case komaType.none:
+  void setKomaToBoard(in uint kt, in uint sq) {
+    assert(sq < 81);
+    assert(kt < 32);
+    final switch (cast(komaType) kt) {
+      mixin(q{
+        case komaType.YYXX:
+          _bbOccupy |= _bbOccupyYY |= _bbYYXX |= MASK_SQ[sq];
+          _masu[sq] = komaType.YYXX;
+          _boardHash.update(sq, komaType.YYXX);
           break;
-      }
-    } else {
-      //盤面への配置
-      assert(kt < 32);
-      final switch (cast(komaType) kt) {
-        mixin(q{
-          case komaType.YYXX:
-            _bbOccupy |= _bbOccupyYY |= _bbYYXX |= MASK_SQ[sq];
-            _masu[sq] = komaType.YYXX;
-            _boardHash.update(sq, komaType.YYXX);
+      }.generateReplace("YY", [ "B", "W" ])
+                .generateReplace("XX", KOMA));
+      case komaType.none:
+        break;
+    }
+  }
+  void setKomaToHand(in uint kt) {
+    assert(kt < 20);
+    final switch (cast(komaType) kt) {
+      mixin(q{
+        case komaType.YYXX:
+          static if ("XX".startsWith("FU", "KY", "KE", "GI", "KA", "HI", "KI")) {
+            _mochigomaYY.addXX;
             break;
-        }.generateReplace("YY", [ "B", "W" ])
-                  .generateReplace("XX", KOMA));
-        case komaType.none:
-          break;
-      }
+          }
+          assert(false);
+      }.generateReplace("YY", [ "B", "W" ])
+                .generateReplace("XX", KOMA));
+      case komaType.none:
+        break;
     }
   }
 
