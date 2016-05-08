@@ -106,7 +106,7 @@ class Shogiban {
 
   // SFENの読み込み
   this(in string sfen = "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1") {
-    immutable PieceToChar = "____PpLlNnSsBbRrGgKk";
+    immutable PieceToChar = "PpLlNnSsBbRrGgKk";
 
     //盤面、手番、持ち駒、手数の文字列に分割
     auto list = sfen.split;
@@ -123,7 +123,7 @@ class Shogiban {
       else if (token == '+')
         promote = 16;
       else if ((idx = cast(int)(PieceToChar.countUntil(token))) != -1) {
-        setKomaToBoard(idx + promote, sq);
+        setKomaToBoard(komaType.BFU + idx + promote, sq);
         promote = 0;
         sq--;
       }
@@ -136,12 +136,11 @@ class Shogiban {
     uint num = 1;  //数の指定が無ければ持ち駒は1枚
     uint beforeNum = 0;
     foreach (token; list[2]) {
-      if (token == '-') break;
       if (token.isDigit) {
         num = token - '0' + beforeNum;
         beforeNum = num * 10;
       } else if ((idx = cast(int)(PieceToChar.countUntil(token))) != -1) {
-        foreach (_; 0..num) { setKomaToHand(idx); }
+        foreach (_; 0..num) { setKomaToHand(komaType.BFU + idx); }
         num = 1;
         beforeNum = 0;
       }
