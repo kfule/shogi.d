@@ -90,7 +90,6 @@ class Shogiban {
       void addYYXX() @nogc { _a += 1 << shift[idx.XX]; }
       void remYYXX() @nogc { _a -= 1 << shift[idx.XX]; }
       uint numYYXX() @nogc const { return (_a >> shift[idx.XX]) & mask[idx.XX]; }
-      bool isYYXX() @nogc const { return cast(bool)(_a & (mask[idx.XX] << shift[idx.XX])); }
     }.generateReplace("YY", [ "", "p" ])
               .generateReplace("XX", [ "FU", "KY", "KE", "GI", "KI", "KA", "HI", "OU" ]));
     uint num(in uint i) const { return (_a >> shift[i]) & mask[i]; }

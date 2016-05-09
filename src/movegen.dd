@@ -76,7 +76,7 @@ Move* genDropsBaseYY(in Shogiban pos, Move* mlist, Bitboard target) @nogc {
   static assert("YY" == "B" || "YY" == "W");
   target.b[1] &= 0xFFFF800000000000UL;  //冗長部分を取り除く
   mixin(q{
-    if (pos._mochigomaYY.isXX) {
+    if (pos._mochigomaYY.numXX) {
       static if ("XX" == "FU") {
         ulong b2FU = pos._bbYYFU.b[0] | (pos._bbYYFU.b[1] >> 1);
         foreach (i;[4, 2, 1]) { b2FU |= (b2FU << (9 * i)) | (b2FU >> (9 * i)); }
