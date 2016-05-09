@@ -82,22 +82,11 @@ struct Bitboard {
   mixin(q{
     Bitboard ATTACKS_XX(in uint sq) @nogc const { return _ATTACKS_XX[(sq << 7) | computeHash(_MASK_XX[sq])]; }
   }.generateReplace("XX", [ "BKY", "WKY", "1199", "9119", "RANK", "FILE" ]));
-  Bitboard ATTACKS_HI(in uint sq) @nogc const { return ATTACKS_RANK(sq) | (ATTACKS_FILE(sq)); }
-  Bitboard ATTACKS_KA(in uint sq) @nogc const { return ATTACKS_9119(sq) | (ATTACKS_1199(sq)); }
-  Bitboard ATTACKS_pHI(in uint sq) @nogc const { return ATTACKS_HI(sq) | (ATTACKS_OU[sq]); }
-  Bitboard ATTACKS_pKA(in uint sq) @nogc const { return ATTACKS_KA(sq) | (ATTACKS_OU[sq]); }
+  Bitboard ATTACKS_HI(in uint sq) @nogc const { return ATTACKS_RANK(sq) | ATTACKS_FILE(sq); }
+  Bitboard ATTACKS_KA(in uint sq) @nogc const { return ATTACKS_9119(sq) | ATTACKS_1199(sq); }
+  Bitboard ATTACKS_pHI(in uint sq) @nogc const { return ATTACKS_HI(sq) | ATTACKS_OU[sq]; }
+  Bitboard ATTACKS_pKA(in uint sq) @nogc const { return ATTACKS_KA(sq) | ATTACKS_OU[sq]; }
   mixin(q{ alias ATTACKS_YYXX = ATTACKS_XX; }.generateReplace("YY", [ "B", "W" ]).generateReplace("XX", [ "KA", "HI", "pKA", "pHI" ]));
-
-  // foreachを使うためのおまじない
-  Range opSlice() { return Range(this); }
-  struct Range {
-    Bitboard bb;
-    uint lastSq;
-    this(Bitboard b) { bb = b; }
-    bool empty() @property { return !cast(bool)bb; }
-    uint front() @property { return lastSq = bb.lsb; }
-    void popFront() { bb ^= MASK_SQ[lastSq]; }
-  }
 }
 
 //空っぽ
