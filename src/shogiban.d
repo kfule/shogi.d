@@ -144,6 +144,7 @@ class Shogiban {
   this(in string sfen = "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1") {
     immutable PieceToChar = "PpLlNnSsBbRrGgKk";
     ubyte id;
+    _listId[] = -1;
 
     //盤面、手番、持ち駒、手数の文字列に分割
     auto list = sfen.split;
@@ -199,7 +200,7 @@ class Shogiban {
         beforeNum = num * 10;
       } else if ((idx = cast(int)(PieceToChar.countUntil(token))) != -1) {
         foreach (_; 0..num) {
-          _list40[id] =  cast(short)setKomaToHand(komaType.BFU + idx);
+          _list40[id] = cast(short)setKomaToHand(komaType.BFU + idx);
           _listId[_list40[id] + 81] = id++;
         }
         num = 1;
