@@ -87,6 +87,23 @@ struct Bitboard {
   Bitboard ATTACKS_pHI(in uint sq) @nogc const { return ATTACKS_HI(sq) | ATTACKS_OU[sq]; }
   Bitboard ATTACKS_pKA(in uint sq) @nogc const { return ATTACKS_KA(sq) | ATTACKS_OU[sq]; }
   mixin(q{ alias ATTACKS_YYXX = ATTACKS_XX; }.generateReplace("YY", [ "B", "W" ]).generateReplace("XX", [ "KA", "HI", "pKA", "pHI" ]));
+
+  alias ATTACKS_DIR0 = ATTACKS_BKY;
+  alias ATTACKS_DIR4 = ATTACKS_WKY;
+  Bitboard ATTACKS_DIR1(in uint sq) @nogc const { return _ATTACKS_5511[(sq << 7) | computeHash(_MASK_1199[sq])]; }
+  Bitboard ATTACKS_DIR5(in uint sq) @nogc const { return _ATTACKS_5599[(sq << 7) | computeHash(_MASK_1199[sq])]; }
+  Bitboard ATTACKS_DIR3(in uint sq) @nogc const { return _ATTACKS_5519[(sq << 7) | computeHash(_MASK_9119[sq])]; }
+  Bitboard ATTACKS_DIR7(in uint sq) @nogc const { return _ATTACKS_5591[(sq << 7) | computeHash(_MASK_9119[sq])]; }
+  Bitboard ATTACKS_DIR2(in uint sq) @nogc const { return _ATTACKS_R[(sq << 7) | computeHash(_MASK_RANK[sq])]; }
+  Bitboard ATTACKS_DIR6(in uint sq) @nogc const { return _ATTACKS_L[(sq << 7) | computeHash(_MASK_RANK[sq])]; }
+  alias ATTACKS_DIR8 = ATTACKS_DIR0;
+  alias ATTACKS_DIR9 = ATTACKS_DIR1;
+  alias ATTACKS_DIR10 = ATTACKS_DIR2;
+  alias ATTACKS_DIR11 = ATTACKS_DIR3;
+  alias ATTACKS_DIR12 = ATTACKS_DIR4;
+  alias ATTACKS_DIR13 = ATTACKS_DIR5;
+  alias ATTACKS_DIR14 = ATTACKS_DIR6;
+  alias ATTACKS_DIR15 = ATTACKS_DIR7;
 }
 
 //空っぽ
@@ -197,6 +214,19 @@ mixin(q{ alias ATTACKS_YYOU = ATTACKS_OU; }.generateReplace("YY", [ "B", "W" ]))
 //成り駒の定数名は文字列mixinのためにpXXで統一する
 mixin(q{ alias ATTACKS_YYpXX = ATTACKS_YYKI; }.generateReplace("XX", [ "FU", "KY", "KE", "GI" ]).generateReplace("YY", [ "B", "W" ]));
 
+immutable Bitboard[81] ATTACKS_KA = expand("000000000_000000000_000000000_000101000_000000000_000101000_000000000_000000000_000000000");
+immutable Bitboard[81] ATTACKS_HI = expand("000000000_000000000_000000000_000010000_000101000_000010000_000000000_000000000_000000000");
+alias ATTACKS_BKY = ATTACKS_BFU;
+alias ATTACKS_WKY = ATTACKS_WFU;
+alias ATTACKS_BKA = ATTACKS_KA;
+alias ATTACKS_WKA = ATTACKS_KA;
+alias ATTACKS_BHI = ATTACKS_HI;
+alias ATTACKS_WHI = ATTACKS_HI;
+alias ATTACKS_BpKA = ATTACKS_OU;
+alias ATTACKS_WpKA = ATTACKS_OU;
+alias ATTACKS_BpHI = ATTACKS_OU;
+alias ATTACKS_WpHI = ATTACKS_OU;
+
 //飛び駒の利きリストを生成する
 Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) getPos, int delegate(int, int) choice, in Bitboard[] MASK) {
   Bitboard[81 * 128] list;
@@ -242,3 +272,10 @@ immutable Bitboard[81 * 128] _ATTACKS_1199 = genLongTable((sq, n) => sq - 10 * (
 immutable Bitboard[81 * 128] _ATTACKS_9119 = genLongTable((sq, n) => sq + 8 * (sq % 9 - n), sq => sq % 9, (a, b) => a | b, _MASK_9119);
 immutable Bitboard[81 * 128] _ATTACKS_FILE = genLongTable((sq, n) => n * 9 + sq % 9, sq => sq / 9, (a, b) => a | b, _MASK_FILE);
 immutable Bitboard[81 * 128] _ATTACKS_RANK = genLongTable((sq, n) => sq / 9 * 9 + n, sq => sq % 9, (a, b) => a | b, _MASK_RANK);
+//
+immutable Bitboard[81 * 128] _ATTACKS_R = genLongTable((sq, n) => sq / 9 * 9 + n, sq => sq % 9, (a, b) => a, _MASK_RANK);
+immutable Bitboard[81 * 128] _ATTACKS_L = genLongTable((sq, n) => sq / 9 * 9 + n, sq => sq % 9, (a, b) => b, _MASK_RANK);
+immutable Bitboard[81 * 128] _ATTACKS_5511 = genLongTable((sq, n) => sq - 10 * (sq % 9 - n), sq => sq % 9, (a, b) => a, _MASK_1199);
+immutable Bitboard[81 * 128] _ATTACKS_5599 = genLongTable((sq, n) => sq - 10 * (sq % 9 - n), sq => sq % 9, (a, b) => b, _MASK_1199);
+immutable Bitboard[81 * 128] _ATTACKS_5591 = genLongTable((sq, n) => sq + 8 * (sq % 9 - n), sq => sq % 9, (a, b) => b, _MASK_9119);
+immutable Bitboard[81 * 128] _ATTACKS_5519 = genLongTable((sq, n) => sq + 8 * (sq % 9 - n), sq => sq % 9, (a, b) => a, _MASK_9119);

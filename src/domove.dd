@@ -5,6 +5,7 @@ auto ACTMove(Move m) @nogc {
   static assert("ACT" == "do" || "ACT" == "undo");
   _teban = ~_teban;
   uint to = m.getTo;
+  Bitboard bb = void;
   static if ("ACT" == "undo") { _masu[to] = komaType.none; }
   if (m.isDrop) {
     //打つ手
@@ -17,6 +18,15 @@ auto ACTMove(Move m) @nogc {
             static if ("ACT" == "undo") { _mochigomaYY.addXX; }
             mixin(q{ BB ^= MASK_SQ[to]; }.generateReplace("BB", [ "_bbYYXX", "_bbOccupyYY", "_bbOccupy" ]));
             _boardHash.update(to, komaType.YYXX);
+            _kikiYY.add_ACT(ATTACKS_YYXX[to]);
+            static if ("XX".startsWith("KY", "KA", "HI")) {
+              mixin(q{
+                bb = _bbOccupy.ATTACKS_DIRNN(to);
+                _kikiYY2.add_ACT(bb);
+                foreach (sq; bb.b[0].BitwiseRange !ulong) { _kikiLong[sq].addYY(NN); }
+                foreach (sq; (bb.b[1] & 0xFFFF800000000000UL).BitwiseRange !(ulong, 17)) { _kikiLong[sq].addYY(NN); }
+              }.generateReplace("NN", DIRECTIONS_YYXX));
+            }
             break;
           }
           assert(false);
@@ -30,6 +40,19 @@ auto ACTMove(Move m) @nogc {
     uint from = m.getFrom;
     static if ("ACT" == "do") { m.setUndoInfo(_masu[from], _masu[to]); }
     static if ("ACT" == "do") { _masu[from] = komaType.none; }
+    foreach (kkl; _kikiLong[from].BitwiseRange !ushort) {
+      final switch (cast(Directions16) kkl) {
+        mixin(q{
+          case Directions16.DirNN:
+            bb = _bbOccupy.ATTACKS_DIRNN(from);
+            static if (NN < 8) _kikiB2.add_ACT(bb);
+            else _kikiW2.add_ACT(bb);
+            foreach (sq; bb.b[0].BitwiseRange !ulong) { _kikiLong[sq].add(NN); }
+            foreach (sq; (bb.b[1] & 0xFFFF800000000000UL).BitwiseRange !(ulong, 17)) { _kikiLong[sq].add(NN); }
+            break;
+        }.generateReplace("NN", iota(16).map !(a => text(a)).array));
+      }
+    }
 
     //成りフラグを含めた駒別の処理
     final switch (cast(komaTypeWP) m.getMovePieceWithIsPromote) {
@@ -37,20 +60,56 @@ auto ACTMove(Move m) @nogc {
         case komaTypeWP.YYXX:
           static if ("ACT" == "do") { _masu[to] = komaType.YYXX; }
           static if ("ACT" == "undo") { _masu[from] = komaType.YYXX; }
+          static if ("XX".startsWith("KY", "KA", "HI", "pKA", "pHI")) {
+            mixin(q{
+              bb = _bbOccupy.ATTACKS_DIRNN(from);
+              _kikiYY2.rem_ACT(bb);
+              foreach (sq; bb.b[0].BitwiseRange !ulong) { _kikiLong[sq].addYY(NN); }
+              foreach (sq; (bb.b[1] & 0xFFFF800000000000UL).BitwiseRange !(ulong, 17)) { _kikiLong[sq].addYY(NN); }
+            }.generateReplace("NN", DIRECTIONS_YYXX));
+          }
           mixin(q{ BB ^= MASK_SQ[from] | MASK_SQ[to]; }.generateReplace("BB", [ "_bbYYXX", "_bbOccupyYY", "_bbOccupy" ]));
           _boardHash.update(from, komaType.YYXX);
           _boardHash.update(to, komaType.YYXX);
+          _kikiYY.rem_ACT(ATTACKS_YYXX[from]);
+          _kikiYY.add_ACT(ATTACKS_YYXX[to]);
+          static if ("XX".startsWith("KY", "KA", "HI", "pKA", "pHI")) {
+            mixin(q{
+              bb = _bbOccupy.ATTACKS_DIRNN(to);
+              _kikiYY2.add_ACT(bb);
+              foreach (sq; bb.b[0].BitwiseRange !ulong) { _kikiLong[sq].addYY(NN); }
+              foreach (sq; (bb.b[1] & 0xFFFF800000000000UL).BitwiseRange !(ulong, 17)) { _kikiLong[sq].addYY(NN); }
+            }.generateReplace("NN", DIRECTIONS_YYXX));
+          }
           break;
           //成り
           static if ("XX".startsWith("FU", "KY", "KE", "GI", "KA", "HI")) {
             case komaTypeWP.YYXXp:
               static if ("ACT" == "do") { _masu[to] = komaType.YYpXX; }
               static if ("ACT" == "undo") { _masu[from] = komaType.YYXX; }
+              static if ("XX".startsWith("KY", "KA", "HI")) {
+                mixin(q{
+                  bb = _bbOccupy.ATTACKS_DIRNN(from);
+                  _kikiYY2.rem_ACT(bb);
+                  foreach (sq; bb.b[0].BitwiseRange !ulong) { _kikiLong[sq].addYY(NN); }
+                  foreach (sq; (bb.b[1] & 0xFFFF800000000000UL).BitwiseRange !(ulong, 17)) { _kikiLong[sq].addYY(NN); }
+                }.generateReplace("NN", DIRECTIONS_YYXX));
+              }
               _bbYYXX ^= MASK_SQ[from];
               _bbYYpXX ^= MASK_SQ[to];
               mixin(q{ BB ^= MASK_SQ[from] | MASK_SQ[to]; }.generateReplace("BB", [ "_bbOccupyYY", "_bbOccupy" ]));
               _boardHash.update(from, komaType.YYXX);
               _boardHash.update(to, komaType.YYpXX);
+              _kikiYY.rem_ACT(ATTACKS_YYXX[from]);
+              _kikiYY.add_ACT(ATTACKS_YYpXX[to]);
+              static if ("XX".startsWith("KA", "HI")) {
+                mixin(q{
+                  bb = _bbOccupy.ATTACKS_DIRNN(to);
+                  _kikiYY2.add_ACT(bb);
+                  foreach (sq; bb.b[0].BitwiseRange !ulong) { _kikiLong[sq].addYY(NN); }
+                  foreach (sq; (bb.b[1] & 0xFFFF800000000000UL).BitwiseRange !(ulong, 17)) { _kikiLong[sq].addYY(NN); }
+                }.generateReplace("NN", DIRECTIONS_YYXX));
+              }
               break;
           }
       }.generateReplace("YY", [ "B", "W" ])
@@ -67,11 +126,35 @@ auto ACTMove(Move m) @nogc {
         static if ("ACT" == "undo") { _masu[to] = komaType.YYXX; }
         mixin(q{ BB ^= MASK_SQ[to]; }.generateReplace("BB", [ "_bbYYXX", "_bbOccupyYY", "_bbOccupy" ]));
         _boardHash.update(to, komaType.YYXX);
+        _kikiYY.rem_ACT(ATTACKS_YYXX[to]);
+        static if ("XX".startsWith("KY", "KA", "HI", "pKA", "pHI")) {
+          mixin(q{
+            bb = _bbOccupy.ATTACKS_DIRNN(to);
+            _kikiYY2.rem_ACT(bb);
+            foreach (sq; bb.b[0].BitwiseRange !ulong) { _kikiLong[sq].addYY(NN); }
+            foreach (sq; (bb.b[1] & 0xFFFF800000000000UL).BitwiseRange !(ulong, 17)) { _kikiLong[sq].addYY(NN); }
+          }.generateReplace("NN", DIRECTIONS_YYXX));
+        }
         break;
     }.generateReplace("YY", "ZZ", [ "B", "W" ])
               .generateReplace("XX", KOMA));
     case komaType.none:
+      foreach (kkl; _kikiLong[to].BitwiseRange !ushort) {
+        final switch (cast(Directions16) kkl) {
+          mixin(q{
+            case Directions16.DirNN:
+              bb = _bbOccupy.ATTACKS_DIRNN(to);
+              static if (NN < 8) _kikiB2.rem_ACT(bb);
+              else _kikiW2.rem_ACT(bb);
+              foreach (sq; bb.b[0].BitwiseRange !ulong) { _kikiLong[sq].add(NN); }
+              foreach (sq; (bb.b[1] & 0xFFFF800000000000UL).BitwiseRange !(ulong, 17)) { _kikiLong[sq].add(NN); }
+              break;
+          }.generateReplace("NN", iota(16).map !(a => text(a)).array));
+        }
+      }
       break;
   }
+  _isKikiB = _kikiB.ge1 | _kikiB2.ge1;
+  _isKikiW = _kikiW.ge1 | _kikiW2.ge1;
   static if ("ACT" == "do") { return m; }
 }

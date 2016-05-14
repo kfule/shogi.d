@@ -55,6 +55,11 @@ class Shogiban {
   //持ち駒
   Mochigoma _mochigomaB = Mochigoma(0), _mochigomaW = Mochigoma(1);
 
+  Bitboard _isKikiB, _isKikiW;
+  kikiBB _kikiB, _kikiW;
+  kikiBB _kikiB2, _kikiW2;
+  kikiLong[81] _kikiLong;
+
   //--------------------------------------------------------
   //  構造体定義
   //--------------------------------------------------------
@@ -127,6 +132,26 @@ class Shogiban {
         sq--;
       }
     }
+    Bitboard bb;
+    mixin(q{
+      mixin(q{
+        foreach (from; _bbYYXX.b[0].BitwiseRange !ulong) {
+          bb = _bbOccupy.ATTACKS_DIRNN(from);
+          _kikiYY2.add(bb);
+          foreach (to; bb.b[0].BitwiseRange !(ulong, 0_)) { _kikiLong[to].addYY(NN); }
+          foreach (to; (bb.b[1] & 0xFFFF800000000000UL).BitwiseRange !(ulong, 17)) { _kikiLong[to].addYY(NN); }
+        }
+        foreach (from; (_bbYYXX.b[1] & 0xFFFF800000000000UL).BitwiseRange !(ulong, 17)) {
+          bb = _bbOccupy.ATTACKS_DIRNN(from);
+          _kikiYY2.add(bb);
+          foreach (to; bb.b[0].BitwiseRange !(ulong, 0_)) { _kikiLong[to].addYY(NN); }
+          foreach (to; (bb.b[1] & 0xFFFF800000000000UL).BitwiseRange !(ulong, 17)) { _kikiLong[to].addYY(NN); }
+        }
+      }.generateReplace("NN", DIRECTIONS_YYXX));
+    }.generateReplace("YY", [ "B", "W" ])
+              .generateReplace("XX", [ "KY", "KA", "HI", "pKA", "pHI" ]));
+    _isKikiB = _kikiB.ge1|_kikiB2.ge1;
+    _isKikiW = _kikiW.ge1|_kikiW2.ge1;
 
     //手番
     _teban = (list[1].front == 'b' ? Teban.SENTE : Teban.GOTE);
@@ -157,6 +182,7 @@ class Shogiban {
           _bbOccupy |= _bbOccupyYY |= _bbYYXX |= MASK_SQ[sq];
           _masu[sq] = komaType.YYXX;
           _boardHash.update(sq, komaType.YYXX);
+          _kikiYY.add(ATTACKS_YYXX[sq]);
           break;
       }.generateReplace("YY", [ "B", "W" ])
                 .generateReplace("XX", KOMA));
