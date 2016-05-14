@@ -5,6 +5,7 @@ auto ACTMove(Move m) @nogc {
   static assert("ACT" == "do" || "ACT" == "undo");
   _teban = ~_teban;
   uint to = m.getTo;
+  byte movId, capId;
   Bitboard bb = void;
   static if ("ACT" == "undo") { _masu[to] = komaType.none; }
   if (m.isDrop) {
@@ -16,6 +17,12 @@ auto ACTMove(Move m) @nogc {
             static if ("ACT" == "do") { _masu[to] = komaType.YYXX; }
             static if ("ACT" == "do") { _mochigomaYY.remXX; }
             static if ("ACT" == "undo") { _mochigomaYY.addXX; }
+
+            static if ("ACT" == "do") { movId = fetchId(81 + IndexPP.YY_hand_XX + _mochigomaYY.numXX + 1); }
+            static if ("ACT" == "do") { write40 !("do")(movId, to, IndexPP.YY_XX + to); }
+            static if ("ACT" == "undo") { movId = fetchId(to); }
+            static if ("ACT" == "undo") { write40 !("undo")(movId, 81 + IndexPP.YY_hand_XX + _mochigomaYY.numXX, IndexPP.YY_hand_XX + _mochigomaYY.numXX); }
+
             mixin(q{ BB ^= MASK_SQ[to]; }.generateReplace("BB", [ "_bbYYXX", "_bbOccupyYY", "_bbOccupy" ]));
             _boardHash.update(to, komaType.YYXX);
             _kikiYY.add_ACT(ATTACKS_YYXX[to]);
@@ -40,6 +47,11 @@ auto ACTMove(Move m) @nogc {
     uint from = m.getFrom;
     static if ("ACT" == "do") { m.setUndoInfo(_masu[from], _masu[to]); }
     static if ("ACT" == "do") { _masu[from] = komaType.none; }
+
+    static if ("ACT" == "do") { movId = fetchId(from); }
+    static if ("ACT" == "undo") { movId = fetchId(to); }
+    static if ("ACT" == "do") { capId = fetchId(to); }
+
     foreach (kkl; _kikiLong[from].BitwiseRange !ushort) {
       final switch (cast(Directions16) kkl) {
         mixin(q{
@@ -60,6 +72,10 @@ auto ACTMove(Move m) @nogc {
         case komaTypeWP.YYXX:
           static if ("ACT" == "do") { _masu[to] = komaType.YYXX; }
           static if ("ACT" == "undo") { _masu[from] = komaType.YYXX; }
+
+          static if ("ACT" == "do") { write40 !("do")(movId, to, IndexPP.YY_XX + to); }
+          static if ("ACT" == "undo") { write40 !("undo")(movId, from, IndexPP.YY_XX + from); }
+
           static if ("XX".startsWith("KY", "KA", "HI", "pKA", "pHI")) {
             mixin(q{
               bb = _bbOccupy.ATTACKS_DIRNN(from);
@@ -87,6 +103,10 @@ auto ACTMove(Move m) @nogc {
             case komaTypeWP.YYXXp:
               static if ("ACT" == "do") { _masu[to] = komaType.YYpXX; }
               static if ("ACT" == "undo") { _masu[from] = komaType.YYXX; }
+
+              static if ("ACT" == "do") { write40 !("do")(movId, to, IndexPP.YY_pXX + to); }
+              static if ("ACT" == "undo") { write40 !("undo")(movId, from, IndexPP.YY_XX + from); }
+
               static if ("XX".startsWith("KY", "KA", "HI")) {
                 mixin(q{
                   bb = _bbOccupy.ATTACKS_DIRNN(from);
@@ -124,6 +144,11 @@ auto ACTMove(Move m) @nogc {
         static if ("ACT" == "do") { _mochigomaZZ.addXX; }
         static if ("ACT" == "undo") { _mochigomaZZ.remXX; }
         static if ("ACT" == "undo") { _masu[to] = komaType.YYXX; }
+
+        static if ("ACT" == "do") { write40 !("do", 1)(capId, 81 + IndexPP.ZZ_hand_XX + _mochigomaZZ.numXX, IndexPP.ZZ_hand_XX + _mochigomaZZ.numXX); }
+        static if ("ACT" == "undo") { capId = fetchId(81 + IndexPP.ZZ_hand_XX + _mochigomaZZ.numXX + 1); }
+        static if ("ACT" == "undo") { write40 !("undo")(capId, to, IndexPP.YY_XX + to); }
+
         mixin(q{ BB ^= MASK_SQ[to]; }.generateReplace("BB", [ "_bbYYXX", "_bbOccupyYY", "_bbOccupy" ]));
         _boardHash.update(to, komaType.YYXX);
         _kikiYY.rem_ACT(ATTACKS_YYXX[to]);
