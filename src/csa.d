@@ -175,7 +175,7 @@ void connectCSA() {
         sendBestMove(ml[uniform(0, $)]);
       }
       if (s[0] == '-') {
-        auto ml = mlistBase[0..ban.genDropsW(ban.genMovesB(mlistBase.ptr)) - mlistBase.ptr];
+        auto ml = mlistBase[0..ban.genDropsB(ban.genMovesB(mlistBase.ptr)) - mlistBase.ptr];
         sendBestMove(ml[uniform(0, $)]);
       }
       ban.writeln;
