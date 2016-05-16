@@ -16,6 +16,8 @@ import std.string;
 import std.range;
 import std.regex;
 import core.simd;
+import std.socket;
+import core.thread;
 version(DigitalMars){
   import core.bitop;
 }
