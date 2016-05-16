@@ -48,24 +48,7 @@ class CsaSocket {
   };
 };
 
-immutable CSA_KOMA = [
-  " * ",
-  " * ",
-  "FU",
-  "KY",
-  "KE",
-  "GI",
-  "KA",
-  "HI",
-  "KI",
-  "OU",
-  "TO",
-  "NY",
-  "NK",
-  "NG",
-  "UM",
-  "RY",
-];
+immutable CSA_KOMA = [ " * ", " * ", "FU", "KY", "KE", "GI", "KA", "HI", "KI", "OU", "TO", "NY", "NK", "NG", "UM", "RY" ];
 
 //"+7776FU"などの文字列を手に変換
 Move csa2Move(Shogiban s, string te) {
@@ -188,11 +171,11 @@ void connectCSA() {
 
       // TODO とりあえずランダムに手を進める
       if (s[0] == '+') {
-        auto ml = mlistBase[0..ban.genMovesW(mlistBase.ptr) - mlistBase.ptr];
+        auto ml = mlistBase[0..ban.genDropsW(ban.genMovesW(mlistBase.ptr)) - mlistBase.ptr];
         sendBestMove(ml[uniform(0, $)]);
       }
       if (s[0] == '-') {
-        auto ml = mlistBase[0..ban.genMovesB(mlistBase.ptr) - mlistBase.ptr];
+        auto ml = mlistBase[0..ban.genDropsW(ban.genMovesB(mlistBase.ptr)) - mlistBase.ptr];
         sendBestMove(ml[uniform(0, $)]);
       }
       ban.writeln;
