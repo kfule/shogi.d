@@ -153,12 +153,12 @@ void connectCSA() {
 
   //対局
   while (!(s = socket.readln).startsWith("#WIN", "#LOSE", "#CENSORED", "#CHUDAN")) {
-    sleep(100.msecs);
+    sleep(10.msecs);
 
     //文字列がSTARTかつ自分の手番の場合, 初手を指す
     if (s.startsWith("START") && teban == startTeban) {
-      auto ml = mlistBase[0..ban.genMovesB(mlistBase.ptr) - mlistBase.ptr];
-      sendBestMove(ml[uniform(0, $)]);
+      s = [aite];
+      goto StartThinking;
     }
 
     //自分の手が返ってきた場合、消費時間から残り時間を調整する
@@ -179,9 +179,9 @@ void connectCSA() {
       //自分の持ち時間を増やす
       remainTime += increment;
 
-      Move m = ban.csa2Move(s[0..7]);
-      ban.doMove(m);
+      ban.doMove(ban.csa2Move(s[0..7]));
 
+    StartThinking:
       //相手の手が予想手と一致しているか？
       //一致してなければ止めて再度探索
       //どちらにしろ時計は進める
