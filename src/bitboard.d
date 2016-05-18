@@ -56,8 +56,8 @@ struct Bitboard {
   Bitboard opBinary(string op)(in Bitboard bb) @nogc const { return mixin("Bitboard(a" ~op ~"bb.a)"); }
   Bitboard opUnary(string op)() @nogc const if (op == "~") { return Bitboard(~a); }
   ref Bitboard opOpAssign(string op)(in Bitboard bb) @nogc if (op != "=") { return this = opBinary !op(bb); }
-  bool opCast(T)() const if (is(T == bool)&&vendor == Vendor.llvm) { return !__builtin_ia32_ptestz128(a, a); }
-  bool opCast(T)() const if (is(T == bool)&&vendor != Vendor.llvm) { return cast(bool)(b[0] | b[1]); }
+  bool opCast(T)() const if (is(T == bool)&&std.compiler.vendor == Vendor.llvm) { return !__builtin_ia32_ptestz128(a, a); }
+  bool opCast(T)() const if (is(T == bool)&&std.compiler.vendor != Vendor.llvm) { return cast(bool)(b[0] | b[1]); }
   Bitboard opBin(string op)(in Bitboard bb) @nogc const { return mixin("Bitboard(b[0]" ~op ~"bb.b[0],b[1]" ~op ~"bb.b[1])"); }
   Bitboard opBin(string op)(in int i) @nogc const { return mixin("Bitboard(b[0]" ~op ~"i,b[1]" ~op ~"i)"); }
 
