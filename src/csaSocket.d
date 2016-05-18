@@ -2,8 +2,9 @@ import std.socket, std.stdio, std.range, std.algorithm, std.ascii, std.random, s
 
 immutable string strCaseCSA = q{
   case "connect":  //対局サーバ接続(CSAプロトコルでのshogi-serverへの接続)
-    while (true) connectCSA();
-    // break;
+    // while (true) connectCSA();
+    connectCSA();
+    break;
 };
 
 //ランダムな英数字文字列を生成する
@@ -112,7 +113,7 @@ void connectCSA() {
     if (s.canFind("Your_Turn")) teban = s[10];
     if (s.canFind("To_Move")) startTeban = s[8];
     // if (s.canFind("Max_Moves")) s[10.. $].parser !int.writeln;
-    // if (s.canFind("Total_Time")) totalTime = s[11.. $].parser !int;
+    if (s.canFind("Total_Time")) totalTime = s[11.. $].parser !int;
     // if (s.canFind("Byoyomi")) s[8.. $].parser !int.writeln;
     if (s.canFind("Increment")) increment = s[10.. $].parser !long;
     if (s.canFind("BEGIN Position")) {
@@ -130,57 +131,75 @@ void connectCSA() {
   char aite = teban == '+' ? '-' : '+';
   long remainTime = totalTime;
   long opponentRemainTime = totalTime;
+  Move bestMove, lastMove, ponderMove;
+  bool isPondering;
 
   //対局条件の合意
   socket.send("AGREE");
+
+  // TODO とりあえずランダムに手を選ぶ
+  Move startThinkingXXX() {
+    if (s[0] == '+' || (s.startsWith("START") && '-' == startTeban)) {
+      auto ml = mlistBase[0..ban.genDropsW(ban.genMovesW(mlistBase.ptr)) - mlistBase.ptr];
+      return  ml[uniform(0, $)];
+    }
+    if (s[0] == '-' || (s.startsWith("START") && '+' == startTeban)) {
+      auto ml = mlistBase[0..ban.genDropsB(ban.genMovesB(mlistBase.ptr)) - mlistBase.ptr];
+      return ml[uniform(0, $)];
+    }
+    return Move.NONE;
+  }
 
   //対局
   while (!(s = socket.readln).startsWith("#WIN", "#LOSE", "#CENSORED", "#CHUDAN")) {
     sleep(10.msecs);
 
-    //文字列がSTARTかつ自分の手番の場合, 初手を指す
-    if (s.startsWith("START") && teban == startTeban) {
-      s = [aite];
-      goto StartThinking;
-    }
+    //初手が自分の手番ならすぐに思考開始
+    if (s.startsWith("START") && teban == startTeban) goto StartThinking;
 
-    //自分の手が返ってきた場合、消費時間から残り時間を調整する
+    //自分の手が返ってきた場合、消費時間を調整
     if (s.startsWith(teban)) {
-      s[9.. $].parser !int.writeln;
       remainTime -= s[9.. $].parser !int;
-      // XXX 相手の持ち時間を増やすのはここでよい？
       opponentRemainTime += increment;
-
-      writeln("残り時間: ", remainTime);
+      writefln("残り時間: %d, 相手残り時間: %d", remainTime, opponentRemainTime);
     }
 
-    //相手の手がきた場合
-    //盤面を更新し、思考開始
+    //相手の手がきた場合、盤面を更新し思考開始
     if (s.startsWith(aite)) {
-      s[9.. $].parser !int.writeln;
       opponentRemainTime -= s[9.. $].parser !int;
-      //自分の持ち時間を増やす
       remainTime += increment;
+      writefln("残り時間: %d, 相手残り時間: %d", remainTime, opponentRemainTime);
 
-      ban.doMove(ban.csa2Move(s[0..7]));
+      // TODO 時間計測開始
 
-    StartThinking:
+      lastMove = ban.csa2Move(s[0..7]);
+
       //相手の手が予想手と一致しているか？
-      //一致してなければ止めて再度探索
-      //どちらにしろ時計は進める
+      if (isPondering && lastMove == ponderMove) {
+        //予想当たり->waitForThinkFinishedまで進める
+      } else {
+        //予想外れ->undo
+        if (isPondering) ban.undoMove(ponderMove);
+        //予想外れ or 予想していないケース
+        ban.doMove(lastMove);
 
-      // TODO とりあえずランダムに手を進める
-      if (s[0] == '+') {
-        auto ml = mlistBase[0..ban.genDropsW(ban.genMovesW(mlistBase.ptr)) - mlistBase.ptr];
-        sendBestMove(ml[uniform(0, $)]);
+      StartThinking:
+        bestMove = startThinkingXXX();
       }
-      if (s[0] == '-') {
-        auto ml = mlistBase[0..ban.genDropsB(ban.genMovesB(mlistBase.ptr)) - mlistBase.ptr];
-        sendBestMove(ml[uniform(0, $)]);
-      }
+      isPondering = false;  // XXX ここで確実にfalseにしておく
+
+      // waitForThinkFinished;
+      sendBestMove(bestMove);
       ban.writeln;
 
       //予想手があれば探索
+      /*
+      if (pv.length > 1 && pv[1] != Move.NONE) {
+        isPondering = true;
+        ponderMove = pos.doMove(pv[1]);
+        // startThinking;
+      }
+      */
     }
   }
 

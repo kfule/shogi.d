@@ -35,4 +35,5 @@ struct Move {
     assert(m.getTo == 50);
     assert(!m.isPromote);
   }
+  static Move NONE;
 }
