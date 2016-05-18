@@ -36,14 +36,15 @@ Move* genMovesBaseYY(bool generateKingMove = true)(in Shogiban pos, Move* mlist,
           *(mlist++) = Move(from, to, true);
     }
     //短い不成(XXX ここだけはインデックスなど直接指定)
-    static if ("XX".startsWith("GI", "KI", "pFU", "pKY", "pKE", "pGI") /*|| (generateKingMove && "XX" == "OU")*/) {
+    static if ("XX".startsWith("GI", "KI", "pFU", "pKY", "pKE", "pGI") || (generateKingMove && "XX" == "OU")) {
       foreach (from; (pos._bbYYXX.b[0] & MASK_16.b[0]).BitwiseRange !(ulong, 0))
-        foreach (to; (target.b[0] & ATTACKS_YYXX[from].b[0]).BitwiseRange !(ulong, 0))
+        foreach (to; (target.b[0] & ATTACKS_YYXX[from].b[0] & ~("XX" == "OU" ? pos._isKikiZZ.b[0] : 0)).BitwiseRange !(ulong, 0))
           *(mlist++) = Move(from, to, false);
       foreach (from; (pos._bbYYXX.b[1] & MASK_79.b[1]).BitwiseRange !(ulong, 17))
-        foreach (to; (target.b[1] & ATTACKS_YYXX[from].b[1]).BitwiseRange !(ulong, 17))
+        foreach (to; (target.b[1] & ATTACKS_YYXX[from].b[1] & ~("XX" == "OU" ? pos._isKikiZZ.b[1] : 0)).BitwiseRange !(ulong, 17))
           *(mlist++) = Move(from, to, false);
     }
+    /*
     static if ("XX" == "OU" && generateKingMove) {
       foreach (from; (pos._bbYYXX.b[0] & MASK_16.b[0]).BitwiseRange !(ulong, 0))
         foreach (to; (target.b[0] & ATTACKS_YYXX[from].b[0] & ~pos._isKikiZZ.b[0]).BitwiseRange !(ulong, 0))
@@ -52,6 +53,7 @@ Move* genMovesBaseYY(bool generateKingMove = true)(in Shogiban pos, Move* mlist,
         foreach (to; (target.b[1] & ATTACKS_YYXX[from].b[1] & ~pos._isKikiZZ.b[1]).BitwiseRange !(ulong, 17))
           *(mlist++) = Move(from, to, false);
     }
+    */
     //飛び利き
     static if ("XX".startsWith("KY", "KA", "HI", "pKA", "pHI")) {
       // 1-3の(1-9)の成り
