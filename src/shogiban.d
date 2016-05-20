@@ -123,6 +123,9 @@ class Shogiban {
     enum idx { FU, KY, KE, GI, KI, KA, HI, OU };
     static immutable int[9] shift = [ 23, 19, 15, 11, 7, 4, 1, 29, 0 ];
     static immutable int[9] mask = [ 31, 7, 7, 7, 7, 3, 3, 3, 0 ];
+    static immutable MASK_BORROW = 0b_100_100000_1000_1000_1000_1000_100_100_0;
+    //優劣比較, <=,>=は使わないこと
+    int opCmp(ref const Mochigoma m) const { return (((m._a - _a) & MASK_BORROW) ? 1 : 0) - (((_a - m._a) & MASK_BORROW) ? 1 : 0); }
     mixin(q{
       void addYYXX() @nogc { _a += 1 << shift[idx.XX]; }
       void remYYXX() @nogc { _a -= 1 << shift[idx.XX]; }
