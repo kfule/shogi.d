@@ -16,11 +16,9 @@ void main() {
   s.writeln;
 
   //コマンド受付
-  foreach (line; stdin.byLine) {
-    auto args = line.chain(" (null)").to !string.strip.split;
+  foreach (args; stdin.byLine.map !(a => a.chain(" (null)").to !string.strip.split))
     switch (args[0])
       mixin(strCommands);  //コマンドの展開
-  }
 }
 
 immutable string strCaseMain = q{
@@ -35,26 +33,10 @@ immutable string strCaseMain = q{
     return;
   case "help":  //ヘルプ(caseの表示)
   default:
-    printCaseText(args[0]);
+    strCommandList.writeln;
     break;
 };
 
-//実行できるコマンドを画面に表示する
-void printCaseText(string arg) {
-  if (arg != "help") writeln("invalid command: " ~arg);
-  writeln("\nコマンドは下記の通り");
-  auto r = regex(r"(?<=case\s)\u0022.+[^\n]");
-  foreach (c; matchAll(strCommands, r)) {
-    writef("%-16s", replaceAll(c.hit, regex(r"\u0022|//.*|:"), ""));
-    writeln(replaceAll(c.hit, regex(r".*\u0022|//[\p{WhiteSpace}]*|:"), ""));
-  }
-  writeln();
-}
-
 //コンパイル時にファイル内を検索してコマンドっぽい文字列変数を収集して結合する
-immutable string strCommands = mixin({
-  string s = "\"\"";
-  foreach (w; import(__FILE__).strip.split)
-    if (w.startsWith("strCase")) s ~= "~" ~w;
-  return s;
-}());
+immutable string strCommands = mixin(import(__FILE__).strip.split.filter !(a => a.startsWith("strCase")).join("~"));
+immutable string strCommandList = strCommands.split("\n").map !strip.filter !(a => a.startsWith("case")).map !(a => a[5.. $]).join("\n");
