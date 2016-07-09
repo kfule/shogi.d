@@ -16,16 +16,10 @@ void main() {
   s.writeln;
 
   //コマンド受付
-  string line;
-  while ({
-    write(">");
-    return ((line = stdin.readln()) !is null);
-  }()) {
-    if (line.strip() == "") line = "(null)";
-    string[] args = line.split();
-    switch (args[0]) {
+  foreach (line; stdin.byLine) {
+    auto args = line.chain(" (null)").to !string.strip.split;
+    switch (args[0])
       mixin(strCommands);  //コマンドの展開
-    }
   }
 }
 
@@ -59,16 +53,8 @@ void printCaseText(string arg) {
 
 //コンパイル時にファイル内を検索してコマンドっぽい文字列変数を収集して結合する
 immutable string strCommands = mixin({
-  string s = "";
-  auto str = import(__FILE__);
-  uint cnt;
-  while (!str.empty) {
-    str = str.find("str" ~"Case");  //こいつ自体が検索に引っかからないように
-    if (!str.empty) {
-      if (cnt++) s ~= "~";
-      s ~= " " ~str[0..11];  //文字列名は後ろ4文字を含めて11文字
-      str = str[11.. $];
-    }
-  }
+  string s = "\"\"";
+  foreach (w; import(__FILE__).strip.split)
+    if (w.startsWith("strCase")) s ~= "~" ~w;
   return s;
 }());
