@@ -32,11 +32,9 @@ struct BitwiseRange(T, uint offset = 0) {
 }
 
 ///ビットボード
-struct Bitboard {
-  union {
-    ulong[2] b;  //コンパイル時変数の初期化周りのバグの回避のためにulong[2]を先に定義している
-    ulong2 a;
-  };
+union Bitboard {
+  ulong[2] b;  //コンパイル時変数の初期化周りのバグの回避のためにulong[2]を先に定義している
+  ulong2 a;
 
   ///コンストラクタ
   this(in Bitboard bb) @nogc { this = bb; }
