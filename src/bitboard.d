@@ -53,13 +53,14 @@ struct Bitboard {
   }
 
   //演算子
-  Bitboard opBinary(string op)(in Bitboard bb) @nogc const { return mixin("Bitboard(a" ~op ~"bb.a)"); }
+  Bitboard opBinary(string op)(in Bitboard bb) @nogc const {
+    return __ctfe ? mixin("Bitboard(b[0]" ~op ~"bb.b[0],b[1]" ~op ~"bb.b[1])") : mixin("Bitboard(a" ~op ~"bb.a)");
+  }
+  Bitboard opBinary(string op)(in int i) @nogc const { return mixin("Bitboard(b[0]" ~op ~"i,b[1]" ~op ~"i)"); }
   Bitboard opUnary(string op)() @nogc const if (op == "~") { return Bitboard(~a); }
   ref Bitboard opOpAssign(string op)(in Bitboard bb) @nogc if (op != "=") { return this = opBinary !op(bb); }
   bool opCast(T)() const if (is(T == bool)&&std.compiler.vendor == Vendor.llvm) { return !__builtin_ia32_ptestz128(a, a); }
   bool opCast(T)() const if (is(T == bool)&&std.compiler.vendor != Vendor.llvm) { return cast(bool)(b[0] | b[1]); }
-  Bitboard opBin(string op)(in Bitboard bb) @nogc const { return mixin("Bitboard(b[0]" ~op ~"bb.b[0],b[1]" ~op ~"bb.b[1])"); }
-  Bitboard opBin(string op)(in int i) @nogc const { return mixin("Bitboard(b[0]" ~op ~"i,b[1]" ~op ~"i)"); }
 
   ///ビット数を数える
   uint popCnt() @nogc const { return.popCnt(b[0]) +.popCnt(b[1] & ~0x7FFFFFFFFFFFUL); }
@@ -170,14 +171,14 @@ Bitboard[81] expand(in string str, int delegate(int, int) dg1, int delegate(int,
   Bitboard* MASK_SHIFT = &_MASK_SHIFT[8];
 
   Bitboard[81] list;
-  auto SIGNED_LEFT_SHIFT(in Bitboard a, in int shift) { return shift >= 0 ? a.opBin !"<<"(shift) : a.opBin !">>"(-shift); }
+  auto SIGNED_LEFT_SHIFT(in Bitboard a, in int shift) { return shift >= 0 ? a << shift : a >> (-shift); }
   // sq==40(５五)の形を基準に各マスの場合に展開していく
   foreach (i; - 4..5)
     foreach (j; - 4..5)
-      list[40 + 9 * i + j] = SIGNED_LEFT_SHIFT(Bitboard(str), dg1(i, j)).opBin !"&"(MASK_SHIFT[dg2(i, j)]);
+      list[40 + 9 * i + j] = SIGNED_LEFT_SHIFT(Bitboard(str), dg1(i, j)) & MASK_SHIFT[dg2(i, j)];
 
   //冗長な部分が一致するようにOR代入した上で, 非冗長化などのマスク処理を行う
-  foreach (ref a; list) { a = a.opBin !"|"(Bitboard(a.b[1] << 17, a.b[0] >> 17)).opBin !"&"(Bitboard(msk_b0, msk_b1)); }
+  foreach (ref a; list) { a = (a | Bitboard(a.b[1] << 17, a.b[0] >> 17)) & Bitboard(msk_b0, msk_b1); }
 
   return list;
 }
@@ -245,7 +246,7 @@ Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) 
     foreach (n; 0..9) {
       if (line & (1 << n)) {
         uint lineSq = getSq(sq, n);  // lineの位置を2次元に
-        if (lineSq < 81) bb = bb.opBin !"|"(MASK_SQ[lineSq]);
+        if (lineSq < 81) bb = bb | MASK_SQ[lineSq];
       }
     }
     return bb;
