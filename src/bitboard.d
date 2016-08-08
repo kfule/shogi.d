@@ -165,7 +165,7 @@ Bitboard[81] expand(in string str) { return expand(str, (i, j) => 9 * i + j, (i,
 Bitboard[81] expand(in string str, int delegate(int, int) dg1, int delegate(int, int) dg2, const ulong msk_b0, const ulong msk_b1) {
   // 左右にずらした時にビットが折り返されないようにするマスク
   Bitboard[17] _MASK_SHIFT;
-  foreach (i; 0..17) { _MASK_SHIFT[i] = Bitboard(replicate("0000000011111111100000000"[16 - i..25 - i], 9)); }
+  foreach (i; 0..17) { _MASK_SHIFT[i] = Bitboard("0000000011111111100000000"[16 - i..25 - i].replicate(9)); }
   Bitboard* MASK_SHIFT = &_MASK_SHIFT[8];
 
   Bitboard[81] list;
