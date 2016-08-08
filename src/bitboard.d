@@ -1,15 +1,9 @@
 /**
  * ビットボード関連
  */
-import std.algorithm, std.compiler, std.conv, std.format, std.range, std.string, core.simd;
+import std.algorithm, std.compiler, std.conv, std.format, std.range, std.string, core.simd, core.bitop;
 version(LDC) {
-  import ldc.gccbuiltins_x86, ldc.intrinsics;
-  uint bsf(T)(in T src) { return cast(uint) llvm_cttz(src, true); }
-  uint popCnt(T)(in T x) { return cast(uint) llvm_ctpop(x); }
-}
-version(DigitalMars) {
-  import core.bitop;
-  alias popCnt = _popcnt;  //これだとpopcnt命令を使っててもインライン展開はされないかも
+  import ldc.gccbuiltins_x86;
 }
 
 // target文字列をlistの各文字列で置換した文字列を返す
@@ -61,7 +55,7 @@ union Bitboard {
   bool opCast(T)() const if (is(T == bool)&&std.compiler.vendor != Vendor.llvm) { return cast(bool)(b[0] | b[1]); }
 
   ///ビット数を数える
-  uint popCnt() @nogc const { return.popCnt(b[0]) +.popCnt(b[1] & ~0x7FFFFFFFFFFFUL); }
+  uint popCnt() @nogc const { return _popcnt(b[0]) + _popcnt(b[1] & ~0x7FFFFFFFFFFFUL); }
 
   /// 最小位ビットを返す
   uint lsb() @nogc const { return b[0] ? b[0].bsf() : (b[1].bsf() + 17); }

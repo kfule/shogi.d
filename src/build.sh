@@ -18,9 +18,7 @@ import std.regex;
 import core.simd;
 import std.socket;
 import core.thread;
-version(DigitalMars){
-  import core.bitop;
-}
+import core.bitop;
 version(LDC){
   import ldc.intrinsics;
   import ldc.gccbuiltins_x86;
