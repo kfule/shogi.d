@@ -1,7 +1,6 @@
 /**
  * ビットボード関連
  */
-import std.algorithm, std.compiler, std.conv, std.format, std.range, std.string, core.simd;
 version(LDC) {
   import ldc.gccbuiltins_x86, ldc.intrinsics;
   uint bsf(T)(in T src) { return cast(uint) llvm_cttz(src, true); }
@@ -13,8 +12,12 @@ version(DigitalMars) {
 }
 
 // target文字列をlistの各文字列で置換した文字列を返す
-string generateReplace(string qs, string target, in string[] list) { return list.map !(a => qs.replace(target, a)).join; }
+string generateReplace(string qs, string target, in string[] list) {
+  import std.algorithm, std.string;
+  return list.map !(a => qs.replace(target, a)).join;
+}
 string generateReplace(string qs, string target1, string target2, in string[2] list) {
+  import std.algorithm, std.string, std.range;
   return list.array.permutations.map !(a => qs.replace(target1, a[0]).replace(target2, a[1])).join;
 }
 unittest {
@@ -26,26 +29,23 @@ unittest {
 struct BitwiseRange(T, uint offset = 0) {
   T a;
   this(T b) { a = b; }
-  bool empty() @property { return !cast(bool)a; }
+  bool empty() @property { return !cast(bool) a; }
   uint front() @property { return bsf(a) + offset; }
   void popFront() { a &= a - 1; }
 }
 
-///ビットボード
-struct Bitboard {
-  union {
-    ulong[2] b;  //コンパイル時変数の初期化周りのバグの回避のためにulong[2]を先に定義している
-    ulong2 a;
-  };
+//ビットボード
+union Bitboard {
+  import core.simd;
+  ulong[2] b;  //コンパイル時に利用するulong[2]を先に定義しておく
+  ulong2 a;
 
-  ///コンストラクタ
+  //コンストラクタ
   this(in Bitboard bb) @nogc { this = bb; }
-  /// ditto
   this(in ulong2 b) @nogc { a = b; }
-  /// ditto
   this(in ulong b0, in ulong b1) @nogc { b = [ b0, b1 ]; }
-  /// ditto
   this(in string str) {
+    import std.format, std.string;
     //アンダースコアは含めて良い, またassertでちょうど81かどうかコンパイル時にも確認可能
     assert(str.replace("_", "").length == 81);
     (s => (s = s.replace("_", "")[17..81]).formattedRead("%b", &b[0]))(str.dup);
@@ -53,19 +53,31 @@ struct Bitboard {
   }
 
   //演算子
-  Bitboard opBinary(string op)(in Bitboard bb) @nogc const { return mixin("Bitboard(a" ~op ~"bb.a)"); }
+  Bitboard opBinary(string op)(in Bitboard bb) @nogc const {
+    return __ctfe ? mixin("Bitboard(b[0]" ~op ~"bb.b[0],b[1]" ~op ~"bb.b[1])") : mixin("Bitboard(a" ~op ~"bb.a)");
+  }
   Bitboard opUnary(string op)() @nogc const if (op == "~") { return Bitboard(~a); }
   ref Bitboard opOpAssign(string op)(in Bitboard bb) @nogc if (op != "=") { return this = opBinary !op(bb); }
-  bool opCast(T)() const if (is(T == bool)&&vendor == Vendor.llvm) { return !__builtin_ia32_ptestz128(a, a); }
-  bool opCast(T)() const if (is(T == bool)&&vendor != Vendor.llvm) { return cast(bool)(b[0] | b[1]); }
-  Bitboard opBin(string op)(in Bitboard bb) @nogc const { return mixin("Bitboard(b[0]" ~op ~"bb.b[0],b[1]" ~op ~"bb.b[1])"); }
+  version(LDC) bool opCast(T)() @nogc const if (is(T == bool)) { return !__builtin_ia32_ptestz128(a, a); }
+  version(DigitalMars) bool opCast(T)() @nogc const if (is(T == bool)) { return cast(bool)(b[0] | b[1]); }
   Bitboard opBin(string op)(in int i) @nogc const { return mixin("Bitboard(b[0]" ~op ~"i,b[1]" ~op ~"i)"); }
 
-  ///ビット数を数える
+  //ビット数を数える
   uint popCnt() @nogc const { return.popCnt(b[0]) +.popCnt(b[1] & ~0x7FFFFFFFFFFFUL); }
 
-  /// 最小位ビットを返す
+  // 最小位ビットを返す
   uint lsb() @nogc const { return b[0] ? b[0].bsf() : (b[1].bsf() + 17); }
+
+  // 飛車角の利き算出用ハッシュ値の計算
+  auto computeHash(in Bitboard mask) @nogc const { return ((((b[0] & mask.b[0]) << 4) | (b[1] & mask.b[1])) * 0x102040810204081UL) >> 57; }
+  mixin(q{
+    Bitboard ATTACKS_XX(in uint sq) @nogc const { return _ATTACKS_XX[(sq << 7) | computeHash(_MASK_XX[sq])]; }
+  }.generateReplace("XX", [ "BKY", "WKY", "1199", "9119", "RANK", "FILE" ]));
+  Bitboard ATTACKS_HI(in uint sq) @nogc const { return ATTACKS_RANK(sq) | ATTACKS_FILE(sq); }
+  Bitboard ATTACKS_KA(in uint sq) @nogc const { return ATTACKS_9119(sq) | ATTACKS_1199(sq); }
+  Bitboard ATTACKS_pHI(in uint sq) @nogc const { return ATTACKS_HI(sq) | ATTACKS_OU[sq]; }
+  Bitboard ATTACKS_pKA(in uint sq) @nogc const { return ATTACKS_KA(sq) | ATTACKS_OU[sq]; }
+  mixin(q{ alias ATTACKS_YYXX = ATTACKS_XX; }.generateReplace("YY", [ "B", "W" ]).generateReplace("XX", [ "KA", "HI", "pKA", "pHI" ]));
 
   string toString() const {
     string s;
@@ -76,17 +88,6 @@ struct Bitboard {
     }
     return s;
   }
-
-  /// 飛車角の利き算出用ハッシュ値の計算
-  auto computeHash(in Bitboard mask) @nogc const { return ((((b[0] & mask.b[0]) << 4) | (b[1] & mask.b[1])) * 0x102040810204081UL) >> 57; }
-  mixin(q{
-    Bitboard ATTACKS_XX(in uint sq) @nogc const { return _ATTACKS_XX[(sq << 7) | computeHash(_MASK_XX[sq])]; }
-  }.generateReplace("XX", [ "BKY", "WKY", "1199", "9119", "RANK", "FILE" ]));
-  Bitboard ATTACKS_HI(in uint sq) @nogc const { return ATTACKS_RANK(sq) | ATTACKS_FILE(sq); }
-  Bitboard ATTACKS_KA(in uint sq) @nogc const { return ATTACKS_9119(sq) | ATTACKS_1199(sq); }
-  Bitboard ATTACKS_pHI(in uint sq) @nogc const { return ATTACKS_HI(sq) | ATTACKS_OU[sq]; }
-  Bitboard ATTACKS_pKA(in uint sq) @nogc const { return ATTACKS_KA(sq) | ATTACKS_OU[sq]; }
-  mixin(q{ alias ATTACKS_YYXX = ATTACKS_XX; }.generateReplace("YY", [ "B", "W" ]).generateReplace("XX", [ "KA", "HI", "pKA", "pHI" ]));
 }
 
 //空っぽ
@@ -133,12 +134,12 @@ alias MASK_PROMOTE_W = MASK_79;
 
 alias MASK_BKEp = MASK_15;  //桂馬が成れる移動元
 alias MASK_WKEp = MASK_59;
-alias MASK_BKE = MASK_59;  //桂馬の不成の移動元
-alias MASK_WKE = MASK_15;
+alias MASK_BKE  = MASK_59;  //桂馬の不成の移動元
+alias MASK_WKE  = MASK_15;
 alias MASK_BGIp = MASK_14;  //銀が成れる移動元/移動先
 alias MASK_WGIp = MASK_69;
-alias MASK_BKY = MASK_39;  //香車の不成の移動先
-alias MASK_WKY = MASK_17;
+alias MASK_BKY  = MASK_39;  //香車の不成の移動先
+alias MASK_WKY  = MASK_17;
 mixin(q{
   alias MASK_BXX = MASK_49;  //不成の移動先
   alias MASK_WXX = MASK_16;
@@ -147,6 +148,7 @@ mixin(q{
 ///駒の利きの展開
 Bitboard[81] expand(in string str) { return expand(str, (i, j) => 9 * i + j, (i, j) => -j, ulong.max, ulong.max); }
 Bitboard[81] expand(in string str, int delegate(int, int) dg1, int delegate(int, int) dg2, const ulong msk_b0, const ulong msk_b1) {
+  import std.range : replicate;
   // 左右にずらした時にビットが折り返されないようにするマスク
   Bitboard[17] _MASK_SHIFT;
   foreach (i; 0..17) { _MASK_SHIFT[i] = Bitboard(replicate("0000000011111111100000000"[16 - i..25 - i], 9)); }
@@ -157,10 +159,10 @@ Bitboard[81] expand(in string str, int delegate(int, int) dg1, int delegate(int,
   // sq==40(５五)の形を基準に各マスの場合に展開していく
   foreach (i; - 4..5)
     foreach (j; - 4..5)
-      list[40 + 9 * i + j] = SIGNED_LEFT_SHIFT(Bitboard(str), dg1(i, j)).opBin !"&"(MASK_SHIFT[dg2(i, j)]);
+      list[40 + 9 * i + j] = SIGNED_LEFT_SHIFT(Bitboard(str), dg1(i, j)) & MASK_SHIFT[dg2(i, j)];
 
   //冗長な部分が一致するようにOR代入した上で, 非冗長化などのマスク処理を行う
-  foreach (ref a; list) { a = a.opBin !"|"(Bitboard(a.b[1] << 17, a.b[0] >> 17)).opBin !"&"(Bitboard(msk_b0, msk_b1)); }
+  foreach (ref a; list) { a = (a | Bitboard(a.b[1] << 17, a.b[0] >> 17)) & Bitboard(msk_b0, msk_b1); }
 
   return list;
 }
@@ -191,7 +193,7 @@ immutable Bitboard[81] ATTACKS_BGI = expand("000000000_000000000_000000000_00010
 immutable Bitboard[81] ATTACKS_WGI = expand("000000000_000000000_000000000_000111000_000000000_000101000_000000000_000000000_000000000");
 immutable Bitboard[81] ATTACKS_BKI = expand("000000000_000000000_000000000_000010000_000101000_000111000_000000000_000000000_000000000");
 immutable Bitboard[81] ATTACKS_WKI = expand("000000000_000000000_000000000_000111000_000101000_000010000_000000000_000000000_000000000");
-immutable Bitboard[81] ATTACKS_OU = expand("_000000000_000000000_000000000_000111000_000101000_000111000_000000000_000000000_000000000");
+immutable Bitboard[81] ATTACKS_OU  = expand("000000000_000000000_000000000_000111000_000101000_000111000_000000000_000000000_000000000");
 mixin(q{ alias ATTACKS_YYOU = ATTACKS_OU; }.generateReplace("YY", [ "B", "W" ]));
 
 //成り駒の定数名は文字列mixinのためにpXXで統一する
@@ -199,8 +201,7 @@ mixin(q{ alias ATTACKS_YYpXX = ATTACKS_YYKI; }.generateReplace("XX", [ "FU", "KY
 
 //飛び駒の利きリストを生成する
 Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) getPos, int delegate(int, int) choice, in Bitboard[] MASK) {
-  Bitboard[81 * 128] list;
-
+  import std.algorithm, std.range;
   // occupiedのパターンのとき、pos位置の駒の飛び利きパターンを返す
   int genAttacksLine(in int occupied, in int pos) {
     int a, b;  // 0
@@ -211,27 +212,18 @@ Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) 
 
   // lineのパターンのビットボードを返す
   Bitboard genBB(in uint line, in uint sq) {
-    Bitboard bb = NULLBITBOARD;
-    foreach (n; 0..9) {
-      if (line & (1 << n)) {
-        uint lineSq = getSq(sq, n);  // lineの位置を2次元に
-        if (lineSq < 81) bb = bb.opBin !"|"(MASK_SQ[lineSq]);
-      }
-    }
+    Bitboard bb;
+    foreach (lineSq; line.BitwiseRange !uint.map !(a => getSq(sq, a)).filter !(a => 0 <= a && a < 81))
+      bb |= MASK_SQ[lineSq];
     return bb;
   }
 
   //直線上に並ぶ駒の配置(2^7=128パターン)別で飛び利きを初期化
-  foreach (occupied; 0..128) {
-    foreach (sq; 0..81) {
-      //駒の配置パターンをビットボードに落とし込みhashを算出
-      int occupied_line = occupied << 1;
-      ulong hash = (sq << 7) | genBB(occupied_line, sq).computeHash(MASK[sq]);
+  Bitboard[81 * 128] list;
+  foreach (occupied_line; iota(128).map !(a => a << 1))
+    foreach (sq; 0..81)
+      list[(sq << 7) | genBB(occupied_line, sq).computeHash(MASK[sq])] = genBB(genAttacksLine(occupied_line, getPos(sq)), sq);
 
-      //駒の配置に対する利きを生成
-      list[hash] = genBB(genAttacksLine(occupied_line, getPos(sq)), sq);
-    }
-  }
   return list;
 }
 
