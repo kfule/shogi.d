@@ -213,8 +213,8 @@ class Shogiban {
   }
 
   //盤面更新の展開
-  mixin(import("domove.dd").generateReplace("ACT", [ "do", "undo" ]));
+  mixin(import("_domove.d").generateReplace("ACT", [ "do", "undo" ]));
 }
 
 //手生成の展開
-mixin(import("movegen.dd").generateReplace("YY", "ZZ", [ "B", "W" ]));
+mixin(import("_movegen.d").generateReplace("YY", "ZZ", [ "B", "W" ]));
