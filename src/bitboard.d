@@ -1,12 +1,9 @@
-/**
- * ビットボード関連
- */
+// ビットボード関連
 version(LDC) {
   import ldc.gccbuiltins_x86, ldc.intrinsics;
   uint bsf(T)(in T src) { return cast(uint) llvm_cttz(src, true); }
   uint popCnt(T)(in T x) { return cast(uint) llvm_ctpop(x); }
-}
-version(DigitalMars) {
+} else {
   import core.bitop;
   alias popCnt = _popcnt;  //これだとpopcnt命令を使っててもインライン展開はされないかも
 }
@@ -88,121 +85,28 @@ union Bitboard {
     }
     return s;
   }
-}
-
-//空っぽ
-immutable NULLBITBOARD = Bitboard(0, 0);
-
-//特定の段のマスク
-immutable MASK_1 = Bitboard("000000000_000000000_000000000_000000000_000000000_000000000_000000000_000000000_111111111");
-immutable MASK_2 = Bitboard("000000000_000000000_000000000_000000000_000000000_000000000_000000000_111111111_000000000");
-immutable MASK_3 = Bitboard("000000000_000000000_000000000_000000000_000000000_000000000_111111111_000000000_000000000");
-immutable MASK_4 = Bitboard("000000000_000000000_000000000_000000000_000000000_111111111_000000000_000000000_000000000");
-immutable MASK_5 = Bitboard("000000000_000000000_000000000_000000000_111111111_000000000_000000000_000000000_000000000");
-immutable MASK_6 = Bitboard("000000000_000000000_000000000_111111111_000000000_000000000_000000000_000000000_000000000");
-immutable MASK_7 = Bitboard("000000000_000000000_111111111_000000000_000000000_000000000_000000000_000000000_000000000");
-immutable MASK_8 = Bitboard("000000000_111111111_000000000_000000000_000000000_000000000_000000000_000000000_000000000");
-immutable MASK_9 = Bitboard("111111111_000000000_000000000_000000000_000000000_000000000_000000000_000000000_000000000");
-
-//特定の段から段までのマスク
-immutable MASK_12 = Bitboard("000000000_000000000_000000000_000000000_000000000_000000000_000000000_111111111_111111111");
-immutable MASK_13 = Bitboard("000000000_000000000_000000000_000000000_000000000_000000000_111111111_111111111_111111111");
-immutable MASK_14 = Bitboard("000000000_000000000_000000000_000000000_000000000_111111111_111111111_111111111_111111111");
-immutable MASK_15 = Bitboard("000000000_000000000_000000000_000000000_111111111_111111111_111111111_111111111_111111111");
-immutable MASK_16 = Bitboard("000000000_000000000_000000000_111111111_111111111_111111111_111111111_111111111_111111111");
-immutable MASK_17 = Bitboard("000000000_000000000_111111111_111111111_111111111_111111111_111111111_111111111_111111111");
-immutable MASK_18 = Bitboard("000000000_111111111_111111111_111111111_111111111_111111111_111111111_111111111_111111111");
-immutable MASK_19 = Bitboard("111111111_111111111_111111111_111111111_111111111_111111111_111111111_111111111_111111111");
-immutable MASK_29 = Bitboard("111111111_111111111_111111111_111111111_111111111_111111111_111111111_111111111_000000000");
-immutable MASK_39 = Bitboard("111111111_111111111_111111111_111111111_111111111_111111111_111111111_000000000_000000000");
-immutable MASK_49 = Bitboard("111111111_111111111_111111111_111111111_111111111_111111111_000000000_000000000_000000000");
-immutable MASK_59 = Bitboard("111111111_111111111_111111111_111111111_111111111_000000000_000000000_000000000_000000000");
-immutable MASK_69 = Bitboard("111111111_111111111_111111111_111111111_000000000_000000000_000000000_000000000_000000000");
-immutable MASK_79 = Bitboard("111111111_111111111_111111111_000000000_000000000_000000000_000000000_000000000_000000000");
-immutable MASK_89 = Bitboard("111111111_111111111_000000000_000000000_000000000_000000000_000000000_000000000_000000000");
-
-//着手禁止点を除いた移動先
-alias MASK_LEGAL_BFU = MASK_29;
-alias MASK_LEGAL_BKY = MASK_29;
-alias MASK_LEGAL_BKE = MASK_39;
-alias MASK_LEGAL_WFU = MASK_18;
-alias MASK_LEGAL_WKY = MASK_18;
-alias MASK_LEGAL_WKE = MASK_17;
-
-alias MASK_PROMOTE_B = MASK_13;
-alias MASK_PROMOTE_W = MASK_79;
-
-alias MASK_BKEp = MASK_15;  //桂馬が成れる移動元
-alias MASK_WKEp = MASK_59;
-alias MASK_BKE  = MASK_59;  //桂馬の不成の移動元
-alias MASK_WKE  = MASK_15;
-alias MASK_BGIp = MASK_14;  //銀が成れる移動元/移動先
-alias MASK_WGIp = MASK_69;
-alias MASK_BKY  = MASK_39;  //香車の不成の移動先
-alias MASK_WKY  = MASK_17;
-mixin(q{
-  alias MASK_BXX = MASK_49;  //不成の移動先
-  alias MASK_WXX = MASK_16;
-}.generateReplace("XX", [ "KA", "HI", "pKA", "pHI" ]));
+};
 
 ///駒の利きの展開
 Bitboard[81] expand(in string str) { return expand(str, (i, j) => 9 * i + j, (i, j) => -j, ulong.max, ulong.max); }
 Bitboard[81] expand(in string str, int delegate(int, int) dg1, int delegate(int, int) dg2, const ulong msk_b0, const ulong msk_b1) {
   import std.range : replicate;
-  // 左右にずらした時にビットが折り返されないようにするマスク
-  Bitboard[17] _MASK_SHIFT;
-  foreach (i; 0..17) { _MASK_SHIFT[i] = Bitboard(replicate("0000000011111111100000000"[16 - i..25 - i], 9)); }
-  Bitboard* MASK_SHIFT = &_MASK_SHIFT[8];
-
-  Bitboard[81] list;
   auto SIGNED_LEFT_SHIFT(in Bitboard a, in int shift) { return shift >= 0 ? a.opBin !"<<"(shift) : a.opBin !">>"(-shift); }
-  // sq==40(５五)の形を基準に各マスの場合に展開していく
-  foreach (i; - 4..5)
-    foreach (j; - 4..5)
-      list[40 + 9 * i + j] = SIGNED_LEFT_SHIFT(Bitboard(str), dg1(i, j)) & MASK_SHIFT[dg2(i, j)];
+  // 左右にずらした時にビットが折り返されないようにするマスク([8]がずらしていない場合のマスク)
+  Bitboard[17] MASK_SHIFT = iota(17).map !(i => Bitboard(replicate("0000000011111111100000000"[16 - i..25 - i], 9))).array[0..17];
 
-  //冗長な部分が一致するようにOR代入した上で, 非冗長化などのマスク処理を行う
-  foreach (ref a; list) { a = (a | Bitboard(a.b[1] << 17, a.b[0] >> 17)) & Bitboard(msk_b0, msk_b1); }
-
-  return list;
+  return iota(81)
+      // sq==40(５五)の形を基準に各マスの場合にシフトしてマスク
+      .map !(sq => SIGNED_LEFT_SHIFT(Bitboard(str), dg1(sq / 9 - 4, sq % 9 - 4)) & MASK_SHIFT[dg2(sq / 9 - 4, sq % 9 - 4) + 8])
+      //冗長な部分が一致するようにOR代入した上で, 飛び駒のマスク等で必要な非冗長化などのマスク処理を行う
+      .map !(a => (a | Bitboard(a.b[1] << 17, a.b[0] >> 17)) & Bitboard(msk_b0, msk_b1))
+      .array[0..81];
 }
-
-immutable Bitboard[81] MASK_SQ = expand("000000000_000000000_000000000_000000000_000010000_000000000_000000000_000000000_000000000");
-unittest {
-  foreach (i; 0..81) { assert(MASK_SQ[i].popCnt == 1, "MASK_SQ[" ~i.text ~"]: 立っているビットは1つ"); }
-  foreach (i; 0..81) { assert(MASK_SQ[i].lsb == i, "MASK_SQ[" ~i.text ~"]: 配列のindexとビットの位置は等しい"); }
-  foreach (i; 0..81) { assert(MASK_SQ[i] == Bitboard((1UL << i) & ((i - 64L) >> 63), (1UL << (i - 17)) & ~((i - 17L) >> 63))); }
-}
-
-immutable Bitboard[81] _MASK_1199 = expand("100000000_010000000_001000000_000100000_000010000_000001000_000000100_000000010_000000001",
-                                           (i, j) => -i + j, (i, j) => i - j, 0xFE7F3F9FC00UL, 0x3F9FCFE0000000UL);
-immutable Bitboard[81] _MASK_9119 = expand("000000001_000000010_000000100_000001000_000010000_000100000_001000000_010000000_100000000",
-                                           (i, j) => i + j, (i, j) => -i - j, 0xFE7F3F9FC00UL, 0x3F9FCFE0000000UL);
-immutable Bitboard[81] _MASK_FILE = expand("000010000_000010000_000010000_000010000_000010000_000010000_000010000_000010000_000010000",
-                                           (i, j) => j, (i, j) => 0, 0xFFFFFFE00UL, 0x7FFFFFFFF80000UL);
-immutable Bitboard[81] _MASK_RANK = expand("000000000_000000000_000000000_000000000_111111111_000000000_000000000_000000000_000000000",
-                                           (i, j) => 9 * i, (i, j) => 0, 0xFE7F3F9FCFEUL, 0x7F3F9FCFE0000000UL);
-mixin(q{ alias _MASK_YYKY = _MASK_FILE; }.generateReplace("YY", [ "B", "W" ]));
-
-//駒の利き
-immutable Bitboard[81] ATTACKS_BFU = expand("000000000_000000000_000000000_000000000_000000000_000010000_000000000_000000000_000000000");
-immutable Bitboard[81] ATTACKS_WFU = expand("000000000_000000000_000000000_000010000_000000000_000000000_000000000_000000000_000000000");
-immutable Bitboard[81] ATTACKS_BKE = expand("000000000_000000000_000000000_000000000_000000000_000000000_000101000_000000000_000000000");
-immutable Bitboard[81] ATTACKS_WKE = expand("000000000_000000000_000101000_000000000_000000000_000000000_000000000_000000000_000000000");
-immutable Bitboard[81] ATTACKS_BGI = expand("000000000_000000000_000000000_000101000_000000000_000111000_000000000_000000000_000000000");
-immutable Bitboard[81] ATTACKS_WGI = expand("000000000_000000000_000000000_000111000_000000000_000101000_000000000_000000000_000000000");
-immutable Bitboard[81] ATTACKS_BKI = expand("000000000_000000000_000000000_000010000_000101000_000111000_000000000_000000000_000000000");
-immutable Bitboard[81] ATTACKS_WKI = expand("000000000_000000000_000000000_000111000_000101000_000010000_000000000_000000000_000000000");
-immutable Bitboard[81] ATTACKS_OU  = expand("000000000_000000000_000000000_000111000_000101000_000111000_000000000_000000000_000000000");
-mixin(q{ alias ATTACKS_YYOU = ATTACKS_OU; }.generateReplace("YY", [ "B", "W" ]));
-
-//成り駒の定数名は文字列mixinのためにpXXで統一する
-mixin(q{ alias ATTACKS_YYpXX = ATTACKS_YYKI; }.generateReplace("XX", [ "FU", "KY", "KE", "GI" ]).generateReplace("YY", [ "B", "W" ]));
 
 //飛び駒の利きリストを生成する
 Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) getPos, int delegate(int, int) choice, in Bitboard[] MASK) {
   import std.algorithm, std.range;
-  // occupiedのパターンのとき、pos位置の駒の飛び利きパターンを返す
+  // lineパターンがoccupiedのとき、pos位置の駒の飛び利きのlineパターンを返す
   int genAttacksLine(in int occupied, in int pos) {
     int a, b;  // 0
     for (int s = pos - 1; s >= 0 && !(a & occupied); s--) a |= 1 << s;
@@ -210,12 +114,10 @@ Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) 
     return choice(a, b);  //香車以外は return a | b;
   }
 
-  // lineのパターンのビットボードを返す
+  // sqを通るlineパターンのビットボードを返す
   Bitboard genBB(in uint line, in uint sq) {
-    Bitboard bb;
-    foreach (lineSq; line.BitwiseRange !uint.map !(a => getSq(sq, a)).filter !(a => 0 <= a && a < 81))
-      bb |= MASK_SQ[lineSq];
-    return bb;
+    return reduce !((bb, sq) => bb | MASK_SQ[sq])  //
+        (Bitboard(0, 0), line.BitwiseRange !uint.map !(a => getSq(sq, a)).filter !(a => 0 <= a && a < 81));
   }
 
   //直線上に並ぶ駒の配置(2^7=128パターン)別で飛び利きを初期化
@@ -227,7 +129,65 @@ Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) 
   return list;
 }
 
-//各飛び駒の利きテーブル(インデックスは sq * 128 + pattern)
+immutable NULLBITBOARD = Bitboard(0, 0);
+
+immutable Bitboard[81] MASK_SQ = expand("000000000_000000000_000000000_000000000_000010000_000000000_000000000_000000000_000000000");
+unittest {
+  foreach (i; 0..81) { assert(MASK_SQ[i].popCnt == 1, "MASK_SQ[" ~i.text ~"]: 立っているビットは1つ"); }
+  foreach (i; 0..81) { assert(MASK_SQ[i].lsb == i, "MASK_SQ[" ~i.text ~"]: 配列のindexとビットの位置は等しい"); }
+  foreach (i; 0..81) { assert(MASK_SQ[i] == Bitboard((1UL << i) & ((i - 64L) >> 63), (1UL << (i - 17)) & ~((i - 17L) >> 63))); }
+}
+
+mixin(q{
+  // NN段目のマスク
+  immutable MASK_NN = Bitboard("000000000".replicate(9 - NN) ~"111111111" ~"000000000".replicate(NN - 1));
+  // 1段目からNN段目までのマスク
+  immutable MASK_1NN = Bitboard("000000000".replicate(9 - NN) ~"111111111".replicate(NN));
+  // NN段目から9段目までのマスク
+  static if (NN != 1) immutable MASK_NN9 = Bitboard("111111111".replicate(10 - NN) ~"000000000".replicate(NN - 1));
+}.generateReplace("NN", iota(9).map !(i => text(i + 1)).array));
+
+// マスクのエイリアス
+mixin([
+  [ "PROMOTE_B", "13" ], [ "PROMOTE_W", "79" ],                         //
+  [ "LEGAL_BFU", "29" ], [ "LEGAL_BKY", "29" ], [ "LEGAL_BKE", "39" ],  //
+  [ "LEGAL_WFU", "18" ], [ "LEGAL_WKY", "18" ], [ "LEGAL_WKE", "17" ],  //
+  [ "BKEp", "15" ],      [ "WKEp", "59" ],                              //
+  [ "BKE", "59" ],       [ "WKE", "15" ],                               //
+  [ "BGIp", "14" ],      [ "WGIp", "69" ],                              //
+  [ "BKY", "39" ],       [ "WKY", "17" ],                               //
+  [ "BKA", "49" ],       [ "BpKA", "49" ],      [ "BHI", "49" ],       [ "BpHI", "49" ],
+  [ "WKA", "16" ],       [ "WpKA", "16" ],      [ "WHI", "16" ],       [ "WpHI", "16" ]
+].map !(a => format("alias MASK_%s = MASK_%s;", a[0], a[1]))
+          .join);
+
+//駒の利き
+immutable Bitboard[81] ATTACKS_BFU = expand("000000000_000000000_000000000_000000000_000000000_000010000_000000000_000000000_000000000");
+immutable Bitboard[81] ATTACKS_WFU = expand("000000000_000000000_000000000_000010000_000000000_000000000_000000000_000000000_000000000");
+immutable Bitboard[81] ATTACKS_BKE = expand("000000000_000000000_000000000_000000000_000000000_000000000_000101000_000000000_000000000");
+immutable Bitboard[81] ATTACKS_WKE = expand("000000000_000000000_000101000_000000000_000000000_000000000_000000000_000000000_000000000");
+immutable Bitboard[81] ATTACKS_BGI = expand("000000000_000000000_000000000_000101000_000000000_000111000_000000000_000000000_000000000");
+immutable Bitboard[81] ATTACKS_WGI = expand("000000000_000000000_000000000_000111000_000000000_000101000_000000000_000000000_000000000");
+immutable Bitboard[81] ATTACKS_BKI = expand("000000000_000000000_000000000_000010000_000101000_000111000_000000000_000000000_000000000");
+immutable Bitboard[81] ATTACKS_WKI = expand("000000000_000000000_000000000_000111000_000101000_000010000_000000000_000000000_000000000");
+immutable Bitboard[81] ATTACKS_OU = expand("000000000_000000000_000000000_000111000_000101000_000111000_000000000_000000000_000000000");
+mixin(q{ alias ATTACKS_YYOU = ATTACKS_OU; }.generateReplace("YY", [ "B", "W" ]));
+
+// 成り駒の定数名は文字列mixinのためにpXXで統一する
+mixin(q{ alias ATTACKS_YYpXX = ATTACKS_YYKI; }.generateReplace("XX", [ "FU", "KY", "KE", "GI" ]).generateReplace("YY", [ "B", "W" ]));
+
+// 飛び駒の利き算出のためのマスク
+immutable Bitboard[81] _MASK_1199 = expand("100000000_010000000_001000000_000100000_000010000_000001000_000000100_000000010_000000001",
+                                           (i, j) => -i + j, (i, j) => i - j, 0xFE7F3F9FC00UL, 0x3F9FCFE0000000UL);
+immutable Bitboard[81] _MASK_9119 = expand("000000001_000000010_000000100_000001000_000010000_000100000_001000000_010000000_100000000",
+                                           (i, j) => i + j, (i, j) => -i - j, 0xFE7F3F9FC00UL, 0x3F9FCFE0000000UL);
+immutable Bitboard[81] _MASK_FILE = expand("000010000_000010000_000010000_000010000_000010000_000010000_000010000_000010000_000010000",
+                                           (i, j) => j, (i, j) => 0, 0xFFFFFFE00UL, 0x7FFFFFFFF80000UL);
+immutable Bitboard[81] _MASK_RANK = expand("000000000_000000000_000000000_000000000_111111111_000000000_000000000_000000000_000000000",
+                                           (i, j) => 9 * i, (i, j) => 0, 0xFE7F3F9FCFEUL, 0x7F3F9FCFE0000000UL);
+mixin(q{ alias _MASK_YYKY = _MASK_FILE; }.generateReplace("YY", [ "B", "W" ]));
+
+// 飛び駒の利きテーブル(インデックスは sq * 128 + pattern)
 immutable Bitboard[81 * 128] _ATTACKS_BKY = genLongTable((sq, n) => n * 9 + sq % 9, sq => sq / 9, (a, b) => a, _MASK_FILE);
 immutable Bitboard[81 * 128] _ATTACKS_WKY = genLongTable((sq, n) => n * 9 + sq % 9, sq => sq / 9, (a, b) => b, _MASK_FILE);
 immutable Bitboard[81 * 128] _ATTACKS_1199 = genLongTable((sq, n) => sq - 10 * (sq % 9 - n), sq => sq % 9, (a, b) => a | b, _MASK_1199);
