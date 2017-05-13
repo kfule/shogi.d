@@ -15,6 +15,10 @@ import std.stdio;
 import std.string;
 import std.range;
 import std.regex;
+import std.process;
+import std.socket;
+import std.experimental.logger;
+import core.thread;
 import core.simd;
 version(DigitalMars){
   import core.bitop;
