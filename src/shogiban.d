@@ -66,14 +66,13 @@ class Shogiban {
     void update(in uint to, in uint koma) @nogc { _key ^= _zobrist[koma - 4][to]; }
 
     //乱数テーブル
-    static immutable ulong[81][28] _zobrist = initZobrist();  //コンパイル時に初期化される
-    static ulong[81][28] initZobrist() {
+    static immutable ulong[81][28] _zobrist = {
       ulong[81][28] z;
       auto gen = Random(77);
       foreach (koma_i; 4..32)
         foreach (square_i; 0..81) { z[koma_i - 4][square_i] = uniform(ulong.min, ulong.max, gen) << 1; }
       return z;
-    }
+    }();
   };
 
   //持ち駒
