@@ -129,7 +129,7 @@ Bitboard[81 * 128] genLongTable(int delegate(int, int) getSq, int delegate(int) 
   return list;
 }
 
-immutable NULLBITBOARD = Bitboard(0, 0);
+enum NULLBITBOARD = Bitboard(0, 0);
 
 immutable Bitboard[81] MASK_SQ = expand("000000000_000000000_000000000_000000000_000010000_000000000_000000000_000000000_000000000");
 unittest {
@@ -140,11 +140,11 @@ unittest {
 
 mixin(q{
   // NN段目のマスク
-  immutable MASK_NN = Bitboard("000000000".replicate(9 - NN) ~"111111111" ~"000000000".replicate(NN - 1));
+  enum MASK_NN = Bitboard("000000000".replicate(9 - NN) ~"111111111" ~"000000000".replicate(NN - 1));
   // 1段目からNN段目までのマスク
-  immutable MASK_1NN = Bitboard("000000000".replicate(9 - NN) ~"111111111".replicate(NN));
+  enum MASK_1NN = Bitboard("000000000".replicate(9 - NN) ~"111111111".replicate(NN));
   // NN段目から9段目までのマスク
-  static if (NN != 1) immutable MASK_NN9 = Bitboard("111111111".replicate(10 - NN) ~"000000000".replicate(NN - 1));
+  static if (NN != 1) enum MASK_NN9 = Bitboard("111111111".replicate(10 - NN) ~"000000000".replicate(NN - 1));
 }.generateReplace("NN", iota(9).map !(i => text(i + 1)).array));
 
 // マスクのエイリアス
