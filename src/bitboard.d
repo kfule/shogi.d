@@ -23,7 +23,7 @@ unittest {
 }
 
 //ビットボードの片面でforeachを使うためのおまじない
-struct BitwiseRange(T, uint offset = 0) {
+struct BitwiseRange(T, uint offset = 0) if (isIntegral !(T)) {
   T a;
   this(T b) { a = b; }
   bool empty() @property { return !cast(bool) a; }

@@ -15,6 +15,7 @@ import std.stdio;
 import std.string;
 import std.range;
 import std.regex;
+import std.traits;
 import std.process;
 import std.socket;
 import std.experimental.logger;
