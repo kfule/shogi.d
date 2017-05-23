@@ -1,5 +1,5 @@
 import std.stdio, std.algorithm, std.array, std.conv, std.range, std.string;
-import shogiban, testcode, move;
+import shogiban, testcode, move, usi2csa;
 
 void main() {
   mixin(STR_INIT);
@@ -33,7 +33,7 @@ immutable string strCaseMain = q{
 };
 
 //コンパイル時にファイル内を検索してコマンドっぽい文字列変数を収集して結合する
-immutable string STR_COMMAND = mixin(import(__FILE__).strip.split.filter !(a => a.startsWith("strCase")).join("~"));
+immutable string STR_COMMAND = mixin(import("releaseBinary.d").strip.split.filter !(a => a.startsWith("strCase")).join("~"));
 immutable string STR_COMMANDLIST = STR_COMMAND.split("\n").map !strip.filter !(a => a.startsWith("case")).map !(a => a[5.. $]).join("\n");
 // mainの最初に実行するコード断片
-immutable string STR_INIT = mixin(import(__FILE__).strip.split.filter !(a => a.startsWith("strInit")).join("~"));
+immutable string STR_INIT = mixin(import("releaseBinary.d").strip.split.filter !(a => a.startsWith("strInit")).join("~"));
