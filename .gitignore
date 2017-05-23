@@ -1,0 +1,4 @@
+shogi-d
+.dub
+res/releaseBinary.d
+res/version
