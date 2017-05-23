@@ -15,7 +15,7 @@
   "stringImportPaths" : ["res"],
   "buildTypes": {
     "debug": {
-      "buildOptions": ["releaseMode", "optimize", "inline", "noBoundsCheck"]
+      "buildOptions": ["unittests", "releaseMode", "optimize", "inline", "noBoundsCheck"]
     }
   }
 }
