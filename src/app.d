@@ -11,7 +11,8 @@ void main() {
 }
 
 immutable string strInitMain = q{
-  std.stdio.stdout.setvbuf(0,_IONBF);
+  writeln("shogi.d version: ", import("version"));
+  std.stdio.stdout.setvbuf(0, _IONBF);
   auto s = new Shogiban;
   s.writeln;
 };

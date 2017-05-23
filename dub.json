@@ -7,7 +7,10 @@
   "copyright": "Copyright © 2017, kfule",
   "license": "MIT",
   "dflags-ldc": ["-mcpu=haswell", "-boundscheck=off", "-O5"],
-  "preBuildCommands" : ["cat src/*.d > res/releaseBinary.d"],
+  "preBuildCommands" : [
+    "git rev-parse --short HEAD > res/version",
+    "cat src/*.d > res/releaseBinary.d"
+  ],
   "importPaths" : ["src"],
   "stringImportPaths" : ["res"],
   "buildTypes": {
