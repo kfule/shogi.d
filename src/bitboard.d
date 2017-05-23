@@ -148,17 +148,17 @@ mixin(q{
   static if (NN != 1) enum MASK_NN9 = Bitboard("111111111".replicate(10 - NN) ~"000000000".replicate(NN - 1));
 }.generateReplace("NN", iota(9).map !(i => text(i + 1)).array));
 
-// マスクのエイリアス
+// マスクのalias
 mixin([
-  [ "PROMOTE_B", "13" ], [ "PROMOTE_W", "79" ],                         //
-  [ "LEGAL_BFU", "29" ], [ "LEGAL_BKY", "29" ], [ "LEGAL_BKE", "39" ],  //
-  [ "LEGAL_WFU", "18" ], [ "LEGAL_WKY", "18" ], [ "LEGAL_WKE", "17" ],  //
-  [ "BKEp", "15" ],      [ "WKEp", "59" ],                              //
-  [ "BKE", "59" ],       [ "WKE", "15" ],                               //
-  [ "BGIp", "14" ],      [ "WGIp", "69" ],                              //
-  [ "BKY", "39" ],       [ "WKY", "17" ],                               //
+  [ "PROMOTE_B", "13" ], [ "PROMOTE_W", "79" ],                         // 成れる段
+  [ "LEGAL_BFU", "29" ], [ "LEGAL_BKY", "29" ], [ "LEGAL_BKE", "39" ],  // 合法的な移動先の段(先手)
+  [ "LEGAL_WFU", "18" ], [ "LEGAL_WKY", "18" ], [ "LEGAL_WKE", "17" ],  // 合法的な移動先の段(後手)
+  [ "BKEp", "15" ],      [ "WKEp", "59" ],                              // 桂馬の成れる移動元の段
+  [ "BKE", "59" ],       [ "WKE", "15" ],                               // 桂馬の不成が可能な移動元の段
+  [ "BGIp", "14" ],      [ "WGIp", "69" ],                              // 銀が成れる移動元or移動先の段
+  [ "BKY", "39" ],       [ "WKY", "17" ],                               // 香車の不成が可能な移動元の段
   [ "BKA", "49" ],       [ "BpKA", "49" ],      [ "BHI", "49" ],       [ "BpHI", "49" ],
-  [ "WKA", "16" ],       [ "WpKA", "16" ],      [ "WHI", "16" ],       [ "WpHI", "16" ]
+  [ "WKA", "16" ],       [ "WpKA", "16" ],      [ "WHI", "16" ],       [ "WpHI", "16" ]  // 飛角の不成な段
 ].map !(a => format("alias MASK_%s = MASK_%s;", a[0], a[1]))
           .join);
 
