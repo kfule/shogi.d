@@ -1,4 +1,5 @@
-import shogiban;
+module shogi.move;
+import shogi.shogiban;
 
 struct Move {
   int _m;

@@ -1,3 +1,4 @@
+module shogi.bitboard;
 import std.algorithm, std.conv, std.range, std.format, std.traits;
 // ビットボード関連
 version(LDC) {

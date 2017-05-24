@@ -1,10 +1,6 @@
-import std.datetime;
-import std.stdio;
-import std.conv;
-import std.random;
+import std.datetime, std.stdio, std.conv, std.random;
 
-import shogiban;
-import move;
+import shogi;
 
 immutable string strCaseTest = q{
   case "test1":  //ランダムムーブテスト(doMoveのみ)

@@ -1,7 +1,8 @@
+module shogi.shogiban;
 import std.algorithm, std.array, std.ascii, std.conv, std.format, std.random, std.range, std.stdio;
 
-import bitboard;
-import move;
+import shogi.bitboard;
+import shogi.move;
 
 enum Teban { SENTE = 0, GOTE = -1 };
 

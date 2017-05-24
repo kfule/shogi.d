@@ -1,5 +1,5 @@
 import std.stdio, std.range, std.algorithm, std.ascii, std.random, std.conv, core.thread, std.string, std.experimental.logger, std.datetime;
-import shogiban, move;
+import shogi;
 
 //ランダムな英数字文字列を生成する
 auto randomStr = (int len) { return iota(len).map !(_ => (letters ~digits)[uniform(0, $)]).array; };

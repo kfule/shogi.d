@@ -11,7 +11,7 @@
     "git rev-parse --short HEAD > res/version",
     "cat src/*.d > res/releaseBinary.d"
   ],
-  "importPaths" : ["src"],
+  "sourcePaths" : ["src", "lib"],
   "stringImportPaths" : ["res"],
   "buildTypes": {
     "debug": {
