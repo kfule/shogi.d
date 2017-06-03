@@ -1,5 +1,4 @@
 module shogi.constants;
-import std.algorithm, std.format, std.array;
 
 enum Teban { SENTE = 0, GOTE = -1 };
 
@@ -10,6 +9,7 @@ const string[10] KOMA_BB = [ "FU", "KY", "KE", "GI", "KA", "HI", "KI", "OU", "pK
 
 // enum komaType, komaTypeWP
 mixin({
+  import std.format, std.algorithm, std.array;
   string s1 = "enum komaType{none=0,";    //駒の種類、先手の歩は4、後手は1を足す、成りは16を足す
   string s2 = "enum komaTypeWP{none=0,";  //下位1ビットに成りフラグつき
   foreach (i, k; KOMA.dup.map !(a => [ "B" ~a, "W" ~a ]).join) {
@@ -33,4 +33,3 @@ unittest {
   assert("TestXX".generateReplace("XX", [ "aaa", "bbb", "ccc" ]) == "TestaaaTestbbbTestccc");
   assert("TestYYZZ".generateReplace("YY", "ZZ", [ "B", "W" ]) == "TestBWTestWB");
 }
-
