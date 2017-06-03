@@ -1,5 +1,4 @@
 module shogi.move;
-import shogi.shogiban;
 
 struct Move {
   int _m;
@@ -20,6 +19,7 @@ struct Move {
   uint getCapture() @nogc const { return (_m >> 24) & 31; }
 
   unittest {
+    import shogi.constants;
     auto m = Move(40, 50, true);
     assert(!m.isDrop);
     assert(m.getFrom == 40);

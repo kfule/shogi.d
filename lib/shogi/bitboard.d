@@ -1,5 +1,7 @@
 module shogi.bitboard;
 import std.algorithm, std.conv, std.range, std.format, std.traits;
+import shogi.constants;
+
 // ビットボード関連
 version(LDC) {
   import ldc.gccbuiltins_x86, ldc.intrinsics;
@@ -8,20 +10,6 @@ version(LDC) {
 } else {
   import core.bitop;
   alias popCnt = _popcnt;  //これだとpopcnt命令を使っててもインライン展開はされないかも
-}
-
-// target文字列をlistの各文字列で置換した文字列を返す
-string generateReplace(string qs, string target, in string[] list) {
-  import std.algorithm, std.string;
-  return list.map !(a => qs.replace(target, a)).join;
-}
-string generateReplace(string qs, string target1, string target2, in string[2] list) {
-  import std.algorithm, std.string, std.range;
-  return list.array.permutations.map !(a => qs.replace(target1, a[0]).replace(target2, a[1])).join;
-}
-unittest {
-  assert("TestXX".generateReplace("XX", [ "aaa", "bbb", "ccc" ]) == "TestaaaTestbbbTestccc");
-  assert("TestYYZZ".generateReplace("YY", "ZZ", [ "B", "W" ]) == "TestBWTestWB");
 }
 
 //ビットボードの片面でforeachを使うためのおまじない
