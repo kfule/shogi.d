@@ -2,6 +2,7 @@
 // doMoveは盤面を戻す情報を含めた指し手を返す
 // undoMoveはdoMoveから返された手を用いて指される前の盤面に戻す
 auto ACTMove(Move m) @nogc {
+  import std.algorithm : startsWith;
   static assert("ACT" == "do" || "ACT" == "undo");
   _teban = ~_teban;
   uint to = m.getTo;

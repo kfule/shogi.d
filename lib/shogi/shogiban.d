@@ -1,6 +1,5 @@
 module shogi.shogiban;
 
-import std.algorithm, std.array, std.ascii, std.conv, std.format, std.random, std.range, std.stdio;
 import shogi.constants, shogi.bitboard, shogi.move;
 
 class Shogiban {
@@ -34,6 +33,7 @@ class Shogiban {
 
     //乱数テーブル
     static immutable ulong[81][28] _zobrist = {
+      import std.random;
       ulong[81][28] z;
       auto gen = Random(77);
       foreach (koma_i; 4..32)
@@ -60,6 +60,7 @@ class Shogiban {
               .generateReplace("XX", [ "FU", "KY", "KE", "GI", "KI", "KA", "HI", "OU" ]));
     uint num(in uint i) const { return (_a >> shift[i]) & mask[i]; }
     wstring toString(in uint i, in uint w) const {
+      import std.conv, std.format;
       immutable wstring strKoma = "歩香桂銀金角飛玉　　";
       return num(i) ? format(" %s%s%2d %s", w ? "\x1b[31m" : "", strKoma[i], num(i), w ? "\x1b[39m" : "").to !wstring : "      ";
     }
@@ -71,6 +72,9 @@ class Shogiban {
 
   // SFENの読み込み
   this(in string sfen = "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1") {
+    import std.range : split, front, retro;
+    import std.algorithm : countUntil, map, reverse, joiner;
+    import std.ascii : isDigit;
     immutable PieceToChar = "PpLlNnSsBbRrGgKk";
 
     //盤面、手番、持ち駒、手数の文字列に分割
@@ -78,20 +82,14 @@ class Shogiban {
 
     //盤面
     int idx = -1;
-    int sq = 8;       //一段目、９筋からスタート
-    int promote = 0;  //成り駒のときは16を足す
-    foreach (token; list[0]) {
+    int sq = 0;
+    foreach (token; list[0].split('/').map !retro.joiner) {
       if (token.isDigit)
-        sq -= token - '0';
-      else if (token == '/')
-        sq += 18;
+        sq += token - '0';  // sqを進める
       else if (token == '+')
-        promote = 16;
-      else if ((idx = cast(int)(PieceToChar.countUntil(token))) != -1) {
-        setKomaToBoard(komaType.BFU + idx + promote, sq);
-        promote = 0;
-        sq--;
-      }
+        _masu[sq - 1] += 16;  //直前のsqの駒を成にする
+      else if ((idx = cast(int)(PieceToChar.countUntil(token))) != -1)
+        setKomaToBoard(komaType.BFU + idx, sq++);
     }
 
     //手番
@@ -131,6 +129,7 @@ class Shogiban {
     }
   }
   void setKomaToHand(in uint kt) {
+    import std.algorithm : startsWith;
     assert(kt < 20);
     final switch (cast(komaType) kt) {
       mixin(q{
@@ -148,34 +147,23 @@ class Shogiban {
   }
 
   override string toString() const {
-    immutable wstring turn = "先後";
-    immutable wstring strX = "１２３４５６７８９";
-    immutable wstring strY = "一二三四五六七八九";
+    import std.conv, std.format, std.range;
     immutable wstring strKoma = "・Ｘ歩香桂銀角飛金玉と杏圭全馬竜";
-
-    wstring str;
-    str ~= turn[_teban & 1];
-    str ~= "手番";
-    str ~= "\n      ";
-    foreach (j; 0..9) { str ~= strX[8 - j]; }
-    str ~= "\n";
+    auto app = appender !wstring;
+    app.put(format("%s手番\n", "先後"w[_teban & 1]));
+    app.put("      ９８７６５４３２１\n");
     foreach (i; 0..9) {
-      str ~= _mochigomaW.toString(i, 1);
+      app.put(_mochigomaW.toString(i, 1));
       foreach (j; 0..9) {
         uint k = _masu[i * 9 + 8 - j];
-        if (k & 1) str ~= "\x1b[31m";  //後手の駒は色を変える
-        str ~= strKoma[k >> 1];
-        if (k & 1) str ~= "\x1b[39m";  //色を戻す
+        app.put(format("%s%s%s", (k & 1) ? "\x1b[31m" : "", strKoma[k >> 1], (k & 1) ? "\x1b[39m" : ""));
       }
-      str ~= strY[i];
-      str ~= _mochigomaB.toString(8 - i, 0);
-      str ~= "\n";
+      app.put(format("%s%s\n", "一二三四五六七八九"w[i], _mochigomaB.toString(8 - i, 0)));
     }
-    str ~= format("\nHashkey(Board): %016x", _boardHash).to !wstring;
-    str ~= format("\nHashkey(HandB): %016x", _mochigomaB._a).to !wstring;
-    str ~= format("\nHashkey(HandW): %016x", _mochigomaW._a).to !wstring;
-    // stringにして返す. もしかしたら文字化けするかも?
-    return str.to !string;
+    app.put(format("\nHashkey(Board): %016x", _boardHash));
+    app.put(format("\nHashkey(HandB): %016x", _mochigomaB._a));
+    app.put(format("\nHashkey(HandW): %016x", _mochigomaW._a));
+    return app.data.to !string;
   }
 
   //盤面更新の展開
