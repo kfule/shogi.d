@@ -86,9 +86,10 @@ class Shogiban {
     foreach (token; list[0].split('/').map !retro.joiner) {
       if (token.isDigit)
         sq += token - '0';  // sqを進める
-      else if (token == '+')
-        _masu[sq - 1] += 16;  //直前のsqの駒を成にする
-      else if ((idx = cast(int)(PieceToChar.countUntil(token))) != -1)
+      else if (token == '+') {
+        setKomaToBoard(komaType.BFU + idx, sq - 1);       // XOR
+        setKomaToBoard(komaType.BFU + idx + 16, sq - 1);  //直前のsqの駒を成にする
+      } else if ((idx = cast(int)(PieceToChar.countUntil(token))) != -1)
         setKomaToBoard(komaType.BFU + idx, sq++);
     }
 
@@ -118,7 +119,7 @@ class Shogiban {
     final switch (cast(komaType) kt) {
       mixin(q{
         case komaType.YYXX:
-          _bbOccupy |= _bbOccupyYY |= _bbYYXX |= MASK_SQ[sq];
+          mixin(q{ BB ^= MASK_SQ[sq]; }.generateReplace("BB", [ "_bbYYXX", "_bbOccupyYY", "_bbOccupy" ]));
           _masu[sq] = komaType.YYXX;
           _boardHash.update(sq, komaType.YYXX);
           break;
