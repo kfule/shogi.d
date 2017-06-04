@@ -9,7 +9,8 @@
   "dflags-ldc": ["-mcpu=haswell", "-boundscheck=off", "-O5"],
   "preBuildCommands" : [
     "git rev-parse --short HEAD > res/version",
-    "cat src/*.d > res/releaseBinary.d"
+    "cat src/*.d > res/releaseBinary.d",
+    "ls src | sed 's/\\.d/;/g' | sed 's/^/import /g' > res/importModule.d"
   ],
   "sourcePaths" : ["src", "lib"],
   "stringImportPaths" : ["res"],

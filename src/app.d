@@ -1,5 +1,6 @@
 import std.stdio, std.algorithm, std.array, std.conv, std.range, std.string;
-import shogi, testcode, usi2csa;
+import shogi;
+mixin(import("importModule.d"));
 
 void main() {
   mixin(STR_INIT);
