@@ -37,7 +37,7 @@ Move* genMovesBaseYY(bool generateKingMove = true)(in Shogiban pos, Move* mlist,
           *(mlist++) = Move(from, to, true);
     }
     //短い不成(XXX ここだけはインデックスなど直接指定)
-    static if ("XX".startsWith("GI", "KI", "pFU", "pKY", "pKE", "pGI") || (generateKingMove && "XX" == "OU")) {
+    static if ("XX".startsWith("GI", "KI") || (generateKingMove && "XX" == "OU")) {
       foreach (from; (pos._bbYYXX.b[0] & MASK_16.b[0]).BitwiseRange !(ulong, 0))
         foreach (to; (target.b[0] & ATTACKS_YYXX[from].b[0]).BitwiseRange !(ulong, 0))
           *(mlist++) = Move(from, to, false);
